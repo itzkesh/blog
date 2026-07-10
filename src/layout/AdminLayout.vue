@@ -1,4 +1,17 @@
 <script setup lang="ts">
+import { supabase } from '../lib/supabase'
+
+const logout = async () => {
+
+  const { error } = await supabase.auth.signOut()
+
+  if (error) {
+    alert(error.message)
+  } else {
+    window.location.href = '/login'
+  }
+
+}
 </script>
 
 <template>
@@ -44,10 +57,10 @@
             </li>
 
             <li class="nav-item">
-              <RouterLink to="/login"  class="btn btn-danger w-100">
-                 <i class="bi bi-box-arrow-right me-2"></i>
-                 Logout
-              </RouterLink>
+              <button @click="logout" class="btn btn-danger w-100">
+                <i class="bi bi-box-arrow-right me-2"></i>
+                Logout
+              </button>
             </li>
 
           </ul>

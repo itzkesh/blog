@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import {supabase} from "../lib/supabase"
 
 import BlogPosts from '../views/BlogPosts.vue'
 import Login from '../views/auth/Login.vue'
@@ -30,6 +31,7 @@ const routes = [
     {
         path: '/admin',
         component: AdminLayout,
+        meta: { requiresAuth: true },
         children:[
             { path: 'dashboard', name: 'AdminDashboard', component: Dashboard},
             { path: 'posts', name: 'AdminPosts', component: AdminPosts},
@@ -44,6 +46,19 @@ const routes = [
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
     routes
+})
+
+router.beforeEach(async (to) => {
+    if (! to.meta.requiresAuth) 
+        return true
+
+    const { data: { session } } = await supabase.auth.getSession()
+
+    if (!session) 
+        return '/login'
+
+    return true
+    
 })
 
 export default router

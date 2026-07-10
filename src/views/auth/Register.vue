@@ -1,3 +1,51 @@
+<script setup lang="ts">
+import { ref } from 'vue'
+// import { useRouter } from 'vue-router'
+import { supabase } from '../../lib/supabase'
+
+// const router = useRouter()
+
+const fullName = ref('')
+const email = ref('')
+const password = ref('')
+
+const loading = ref(false)
+const errorMessage = ref('')
+const successMessage = ref('')
+
+const signUp = async () => {
+  errorMessage.value = ''
+  successMessage.value = ''
+  loading.value = true
+
+  const { data, error } = await supabase.auth.signUp({
+    email: email.value,
+    password: password.value,
+    options: {
+      data: {
+        full_name: fullName.value
+      }
+    }
+  })
+
+  loading.value = false
+
+  if (error) {
+    errorMessage.value = error.message
+    return
+  }
+
+  successMessage.value =
+    'Account created successfully! Please check your email to verify your account.'
+
+  console.log(data)
+
+  // setTimeout(() => {
+  //   router.push('/login')
+  // }, 3000)
+}
+</script>
+
 <template>
   <div class="register-page d-flex align-items-center">
     <div class="container">
@@ -15,7 +63,7 @@
                 </p>
               </div>
 
-              <form>
+              <form @submit.prevent="signUp">
 
                 <!-- Full Name -->
                 <div class="mb-3">
@@ -24,6 +72,7 @@
                   </label>
                   <input
                     type="text"
+                    v-model="fullName"
                     class="form-control form-control-lg"
                     placeholder="Enter your full name"
                   >
@@ -36,6 +85,7 @@
                   </label>
                   <input
                     type="email"
+                    v-model="email"
                     class="form-control form-control-lg"
                     placeholder="Enter your email"
                   >
@@ -48,48 +98,40 @@
                   </label>
                   <input
                     type="password"
+                    v-model="password"
                     class="form-control form-control-lg"
                     placeholder="Create a password"
                   >
                 </div>
 
-                <!-- Confirm Password -->
-                <div class="mb-4">
-                  <label class="form-label fw-semibold">
-                    Confirm Password
-                  </label>
-                  <input
-                    type="password"
-                    class="form-control form-control-lg"
-                    placeholder="Confirm your password"
-                  >
-                </div>
+                <div
+                  v-if="errorMessage"
+                  class="alert alert-danger"
+                >
+                   {{ errorMessage }}
+                 </div>
 
-                <!-- Terms -->
-                <div class="form-check mb-4">
-                  <input
-                    class="form-check-input"
-                    type="checkbox"
-                    id="terms"
-                  >
-                  <label
-                    class="form-check-label"
-                    for="terms"
-                  >
-                    I agree to the
-                    <a href="#" class="text-decoration-none">
-                      Terms & Conditions
-                    </a>
-                  </label>
-                </div>
+                   <div
+                     v-if="successMessage"
+                     class="alert alert-success"
+                   >
+                     {{ successMessage }}
+                   </div>
+
 
                 <!-- Register Button -->
                 <button
-                  type="submit"
+                 type="submit"
                   class="btn btn-primary btn-lg w-100"
+                  :disabled="loading"
                 >
-                  Create Account
-                </button>
+                <span
+                  v-if="loading"
+                  class="spinner-border spinner-border-sm me-2"
+                ></span>
+
+                {{ loading ? 'Creating Account...' : 'Create Account' }}
+              </button>
 
                 <hr class="my-4">
 
@@ -115,9 +157,6 @@
   </div>
 </template>
 
-<script setup lang="ts">
-// Registration logic will be added later.
-</script>
 
 <style scoped>
 .register-page {
