@@ -1,3 +1,36 @@
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { supabase } from '../../lib/supabase'
+
+const router = useRouter()
+
+const email = ref('')
+const password = ref('')
+const loading = ref(false)
+const error = ref('')
+
+const login = async () => {
+  loading.value = true
+  error.value = ''
+
+  const { error: authError } =
+    await supabase.auth.signInWithPassword({
+      email: email.value,
+      password: password.value
+    })
+
+  loading.value = false
+
+  if (authError) {
+    error.value = authError.message
+    return
+  }
+
+  router.push('admin')
+}
+</script>
 <template>
   <div class="login-page d-flex align-items-center">
     <div class="container">
@@ -14,16 +47,28 @@
                 </p>
               </div>
 
-              <form>
+              <form @submit.prevent="login">
+
+                <!-- Error -->
+                <div
+                  v-if="error"
+                  class="alert alert-danger"
+                >
+                  {{ error }}
+                </div>
+
                 <!-- Email -->
                 <div class="mb-3">
                   <label class="form-label fw-semibold">
                     Email Address
                   </label>
+
                   <input
+                    v-model="email"
                     type="email"
                     class="form-control form-control-lg"
                     placeholder="Enter your email"
+                    required
                   >
                 </div>
 
@@ -32,10 +77,13 @@
                   <label class="form-label fw-semibold">
                     Password
                   </label>
+
                   <input
+                    v-model="password"
                     type="password"
                     class="form-control form-control-lg"
                     placeholder="Enter your password"
+                    required
                   >
                 </div>
 
@@ -69,15 +117,21 @@
                 <button
                   type="submit"
                   class="btn btn-primary btn-lg w-100"
+                  :disabled="loading"
                 >
-                  Login
+                  <span
+                    v-if="loading"
+                    class="spinner-border spinner-border-sm me-2"
+                  ></span>
+
+                  {{ loading ? 'Logging in...' : 'Login' }}
                 </button>
 
                 <hr class="my-4">
 
-                <!-- Register -->
                 <p class="text-center mb-0">
                   Don't have an account?
+
                   <RouterLink
                     to="/register"
                     class="fw-semibold text-decoration-none"
@@ -97,9 +151,6 @@
   </div>
 </template>
 
-<script setup lang="ts">
-// Authentication logic will be added later.
-</script>
 
 <style scoped>
 .login-page {
@@ -108,16 +159,16 @@
 }
 
 .card {
-  transition: all 0.3s ease;
+  transition: .3s;
 }
 
 .card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-5px);
 }
 
 .form-control {
   border-radius: 12px;
-  padding: 0.8rem 1rem;
+  padding: .9rem 1rem;
 }
 
 .form-control:focus {
@@ -127,7 +178,7 @@
 
 .btn {
   border-radius: 12px;
-  padding: 0.8rem;
+  padding: .9rem;
   font-weight: 600;
 }
 </style>

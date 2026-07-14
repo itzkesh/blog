@@ -1,48 +1,48 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-// import { useRouter } from 'vue-router'
 import { supabase } from '../../lib/supabase'
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 
-// const router = useRouter()
+const router = useRouter()
 
+// form state
 const fullName = ref('')
 const email = ref('')
 const password = ref('')
-
 const loading = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
 
 const signUp = async () => {
-  errorMessage.value = ''
-  successMessage.value = ''
-  loading.value = true
+  try {
+    loading.value = true
+    errorMessage.value = ''
+    successMessage.value = ''
 
-  const { data, error } = await supabase.auth.signUp({
-    email: email.value,
-    password: password.value,
-    options: {
-      data: {
-        full_name: fullName.value
+    const { data, error } = await supabase.auth.signUp({
+      email: email.value,
+      password: password.value,
+      options: {
+        data: {
+          full_name: fullName.value
+        }
       }
+    })
+
+    if (error) throw error
+
+    if (data.session) {
+      router.push('/admin')
+    } else {
+      successMessage.value =
+        'Registration successful! Check your email to verify your account.'
     }
-  })
-
-  loading.value = false
-
-  if (error) {
-    errorMessage.value = error.message
-    return
+  } catch (err: any) {
+    console.error(err)
+    errorMessage.value = err.message || 'Something went wrong.'
+  } finally {
+    loading.value = false
   }
-
-  successMessage.value =
-    'Account created successfully! Please check your email to verify your account.'
-
-  console.log(data)
-
-  // setTimeout(() => {
-  //   router.push('/login')
-  // }, 3000)
 }
 </script>
 
