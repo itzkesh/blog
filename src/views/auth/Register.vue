@@ -1,14 +1,16 @@
 <script setup lang="ts">
-import { supabase } from '../../lib/supabase'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { supabase } from '../../lib/supabase'
 
 const router = useRouter()
 
-// form state
-const fullName = ref('')
+const username = ref('')
 const email = ref('')
+const phoneNumber = ref('')
+const address = ref('')
 const password = ref('')
+
 const loading = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
@@ -19,27 +21,44 @@ const signUp = async () => {
     errorMessage.value = ''
     successMessage.value = ''
 
+    // Create auth user
     const { data, error } = await supabase.auth.signUp({
       email: email.value,
       password: password.value,
       options: {
         data: {
-          full_name: fullName.value
+          full_name: username.value
         }
       }
     })
 
     if (error) throw error
 
+    // If user was created successfully
+    if (data.user) {
+      const { error: profileError } = await supabase
+        .from('seller_profiles')
+        .insert({
+          id: data.user.id,
+          username: username.value,
+          email: email.value,
+          phone_number: phoneNumber.value,
+          address: address.value
+        })
+
+      if (profileError) throw profileError
+    }
+
     if (data.session) {
       router.push('/admin/dashboard')
     } else {
       successMessage.value =
-        'Registration successful! Check your email to verify your account.'
+        'Registration successful! Please verify your email before logging in.'
     }
+
   } catch (err: any) {
     console.error(err)
-    errorMessage.value = err.message || 'Something went wrong.'
+    errorMessage.value = err.message
   } finally {
     loading.value = false
   }
@@ -65,16 +84,42 @@ const signUp = async () => {
 
               <form @submit.prevent="signUp">
 
-                <!-- Full Name -->
+                <!-- Username -->
                 <div class="mb-3">
                   <label class="form-label fw-semibold">
-                    Full Name
+                    Username
                   </label>
                   <input
                     type="text"
-                    v-model="fullName"
+                    v-model="username"
                     class="form-control form-control-lg"
                     placeholder="Enter your full name"
+                  >
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label fw-semibold">
+                    Phone Number
+                  </label>
+
+                  <input
+                    v-model="phoneNumber"
+                    type="text"
+                    class="form-control form-control-lg"
+                    placeholder="Enter phone number"
+                  >
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label fw-semibold">
+                    Address
+                  </label>
+
+                   <input
+                    v-model="address"
+                    type="text"
+                    class="form-control form-control-lg"
+                    placeholder="Enter address"
                   >
                 </div>
 
