@@ -1,5 +1,8 @@
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
 import { supabase } from '../lib/supabase'
+
+const router = useRouter()
 
 const logout = async () => {
 
@@ -8,7 +11,7 @@ const logout = async () => {
   if (error) {
     alert(error.message)
   } else {
-    window.location.href = '/login'
+    router.push('/login')
   }
 
 }

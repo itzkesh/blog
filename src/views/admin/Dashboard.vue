@@ -1,5 +1,21 @@
 <script setup lang="ts">
-// Dashboard logic will be added later
+import { ref, onMounted } from 'vue'
+import { supabase } from '../../lib/supabase'
+
+const profile = ref<any>(null)
+
+const getUser = async () => {
+  const { data: { user }, error } = await supabase.auth.getUser()
+  if (error) {
+    console.error(error.message)
+    return
+  }
+  profile.value = user
+}
+
+onMounted(() => {
+  getUser()
+})
 </script>
 
 <template>
@@ -12,7 +28,7 @@
               </h2>
 
               <p class="text-muted">
-                Welcome back, Kay
+                Welcome back, {{  profile?.user_metadata?.full_name }}
               </p>
             </div>
 

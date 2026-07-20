@@ -28,7 +28,7 @@ const login = async () => {
     return
   }
 
-  router.push('admin')
+  router.push('/admin/dashboard')
 }
 </script>
 <template>

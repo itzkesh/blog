@@ -32,7 +32,7 @@ const signUp = async () => {
     if (error) throw error
 
     if (data.session) {
-      router.push('/admin')
+      router.push('/admin/dashboard')
     } else {
       successMessage.value =
         'Registration successful! Check your email to verify your account.'
