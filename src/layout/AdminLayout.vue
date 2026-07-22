@@ -1,22 +1,30 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '../lib/supabase'
 
 const router = useRouter()
 
+const loggingOut = ref(false)
+
 const logout = async () => {
+  try {
+    loggingOut.value = true
 
-  const { error } = await supabase.auth.signOut()
+    const { error } = await supabase.auth.signOut()
 
-  if (error) {
-    alert(error.message)
-  } else {
+    if (error) {
+      throw error
+    }
+
     router.push('/login')
+  } catch (err: any) {
+    alert(err.message)
+  } finally {
+    loggingOut.value = false
   }
-
 }
 </script>
-
 <template>
     <div class="dashboard">
     <div class="container-fluid">
@@ -59,12 +67,20 @@ const logout = async () => {
               </RouterLink>
             </li>
 
-            <li class="nav-item">
-              <button @click="logout" class="btn btn-danger w-100">
-                <i class="bi bi-box-arrow-right me-2"></i>
-                Logout
-              </button>
-            </li>
+            <button
+          @click="logout"
+           class="btn btn-danger"
+           :disabled="loggingOut"
+>
+           <span
+          v-if="loggingOut"
+             class="spinner-border spinner-border-sm me-2"
+           role="status"
+           aria-hidden="true"
+          ></span>
+
+            {{ loggingOut ? 'Logging out...' : 'Logout' }}
+         </button>
 
           </ul>
 
