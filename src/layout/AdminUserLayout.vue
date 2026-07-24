@@ -82,7 +82,7 @@ const logout = async () => {
 
             <li class="nav-item">
               <RouterLink
-                to="/orders"
+                to="/auth/orders"
                 class="nav-link"
               >
                 <i class="bi bi-bag-check me-2"></i>

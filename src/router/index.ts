@@ -13,6 +13,7 @@ import Profile from '../views/users/Profile.vue'
 import MyProducts from '../views/users/MyProducts.vue'
 import UserLayout from '../layout/UserLayout.vue'
 import AdminLayout from '../layout/AdminUserLayout.vue'
+import Orders from '../views/users/Orders.vue'
 
 const routes = [
 
@@ -37,7 +38,8 @@ const routes = [
             { path: 'my-products', name: 'AdminMyProducts', component: MyProducts},
             { path: 'products/add', name: 'AdminAddProduct', component: AddProduct},
             { path: 'products/edit/:id', name: 'AdminEditProduct', component: AddProduct},
-            { path: 'profile', name: 'AdminProfile', component: Profile }
+            { path: 'profile', name: 'AdminProfile', component: Profile },
+            { path: 'orders', name: 'AdminOrders', component: Orders }
         ]
     },
  
