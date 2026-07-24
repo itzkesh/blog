@@ -6,13 +6,13 @@ import Login from '../views/auth/Login.vue'
 import Register from '../views/auth/Register.vue'
 import ResetPassword from '../views/auth/ResetPassword.vue'
 import ForgotPassword from '../views/auth/ForgotPassword.vue'
-import Dashboard from '../views/admin/Dashboard.vue'
-import NewPost from '../views/admin/NewPost.vue'
-import EditPost from '../views/admin/EditPost.vue'
-import Profile from '../views/admin/Profile.vue'
-import AdminPosts from '../views/admin/AdminPosts.vue'
+import Dashboard from '../views/users/Dashboard.vue'
+
+import AddProduct from '../views/users/AddProduct.vue'
+import Profile from '../views/users/Profile.vue'
+import MyProducts from '../views/users/MyProducts.vue'
 import UserLayout from '../layout/UserLayout.vue'
-import AdminLayout from '../layout/AdminLayout.vue'
+import AdminLayout from '../layout/AdminUserLayout.vue'
 
 const routes = [
 
@@ -29,14 +29,14 @@ const routes = [
     },
     
     {
-        path: '/admin',
+        path: '/auth',
         component: AdminLayout,
         meta: { requiresAuth: true },
         children:[
-            { path: 'dashboard', name: 'AdminDashboard', component: Dashboard},
-            { path: 'posts', name: 'AdminPosts', component: AdminPosts},
-            { path: 'posts/new', name: 'AdminNewPost', component: NewPost},
-            { path: 'post/:id/edit', name: 'AdminEditPost', component: EditPost },
+            { path: 'dashboard', name: 'UserDashboard', component: Dashboard},
+            { path: 'my-products', name: 'AdminMyProducts', component: MyProducts},
+            { path: 'products/add', name: 'AdminAddProduct', component: AddProduct},
+            { path: 'products/edit/:id', name: 'AdminEditProduct', component: AddProduct},
             { path: 'profile', name: 'AdminProfile', component: Profile }
         ]
     },

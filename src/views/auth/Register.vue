@@ -50,7 +50,7 @@ const signUp = async () => {
     }
 
     if (data.session) {
-      router.push('/admin/dashboard')
+      router.push('/auth/dashboard')
     } else {
       successMessage.value =
         'Registration successful! Please verify your email before logging in.'
