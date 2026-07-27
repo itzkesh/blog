@@ -10,42 +10,88 @@ interface SellerProfile {
   address: string | null
 }
 
+interface Product {
+  id: number
+  name: string
+  price: number
+  quantity: number
+  image_url: string | null
+  product_categories?: {
+    name: string
+  } | null
+}
+
 const profile = ref<SellerProfile | null>(null)
+
+const recentProducts = ref<Product[]>([])
+
 const loading = ref(true)
+const loadingProducts = ref(true)
 
-const getProfile = async () => {
+const totalProducts = ref(0)
+// const totalStock = ref(0)
+const totalValue = ref(0)
+
+const getDashboard = async () => {
   loading.value = true
+  loadingProducts.value = true
 
-  // Get the authenticated user
   const {
-    data: { user },
-    error: authError
+    data: { user }
   } = await supabase.auth.getUser()
 
-  if (authError || !user) {
-    console.error(authError?.message || 'User not found')
+  if (!user) {
     loading.value = false
+    loadingProducts.value = false
     return
   }
 
-  // Fetch the user's profile
-  const { data, error } = await supabase
+  // Seller profile
+  const { data: profileData } = await supabase
     .from('seller_profiles')
     .select('*')
     .eq('id', user.id)
     .single()
 
-  if (error) {
-    console.error(error.message)
-  } else {
-    profile.value = data
-  }
+  profile.value = profileData
+
+  // Recent products
+  const { data: products } = await supabase
+    .from('products')
+    .select(`
+      *,
+      product_categories(name)
+    `)
+    .eq('seller_id', user.id)
+    .order('created_at', { ascending: false })
+    .limit(5)
+
+  recentProducts.value = products || []
+
+  // Dashboard statistics
+  const { data: stats } = await supabase
+    .from('products')
+    .select('price, quantity')
+    .eq('seller_id', user.id)
+
+  totalProducts.value = stats?.length || 0
+
+  // totalStock.value =
+  //   stats?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0
+
+  totalValue.value =
+    stats?.reduce(
+      (sum, item) =>
+        sum + Number(item.price) * (item.quantity || 0),
+      0
+    ) || 0
 
   loading.value = false
+  loadingProducts.value = false
 }
 
 onMounted(() => {
-  getProfile()
+  getDashboard()
 })
 </script>
 
@@ -94,7 +140,7 @@ onMounted(() => {
             <i class="bi bi-box-seam"></i>
           </div>
 
-          <h2>0</h2>
+          <h2>{{ totalProducts }}</h2>
           <p>My Products</p>
         </div>
       </div>
@@ -172,47 +218,76 @@ onMounted(() => {
 
         <tbody>
 
-          <tr>
-            <td>iPhone 15 Pro</td>
-            <td>Phones</td>
-            <td>₦1,350,000</td>
-            <td>8</td>
+<tr v-if="loadingProducts">
+  <td colspan="5" class="text-center py-5">
+    Loading products...
+  </td>
+</tr>
 
-            <td>
-              <RouterLink
-                to="/products/1/edit"
-                class="btn btn-sm btn-primary me-2"
-              >
-                Edit
-              </RouterLink>
+<tr
+  v-else-if="recentProducts.length === 0"
+>
+  <td colspan="5" class="text-center py-5">
+    No products found.
+  </td>
+</tr>
 
-              <button class="btn btn-sm btn-danger">
-                Delete
-              </button>
-            </td>
-          </tr>
+<tr
+  v-for="product in recentProducts"
+  :key="product.id"
+>
 
-          <tr>
-            <td>MacBook Air M3</td>
-            <td>Laptops</td>
-            <td>₦2,100,000</td>
-            <td>5</td>
+  <td>
 
-            <td>
-              <RouterLink
-                to="/products/2/edit"
-                class="btn btn-sm btn-primary me-2"
-              >
-                Edit
-              </RouterLink>
+    <div class="d-flex align-items-center">
 
-              <button class="btn btn-sm btn-danger">
-                Delete
-              </button>
-            </td>
-          </tr>
+      <img
+        :src="product.image_url ?? undefined"
+        width="60"
+        height="60"
+        class="rounded me-3"
+        style="object-fit:cover"
+      >
 
-        </tbody>
+      <strong>{{ product.name }}</strong>
+
+    </div>
+
+  </td>
+
+  <td>
+    {{ product.product_categories?.name }}
+  </td>
+
+  <td>
+    ₦{{ Number(product.price).toLocaleString() }}
+  </td>
+
+  <td>
+    {{ product.quantity }}
+  </td>
+
+  <td>
+
+    <RouterLink
+      :to="`/auth/my-product/${product.id}`"
+      class="btn btn-sm btn-outline-primary me-2"
+    >
+      View
+    </RouterLink>
+
+    <RouterLink
+      :to="`/auth/edit/${product.id}`"
+      class="btn btn-sm btn-primary"
+    >
+      Edit
+    </RouterLink>
+
+  </td>
+
+</tr>
+
+</tbody>
 
       </table>
     </div>

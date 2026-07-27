@@ -1,43 +1,88 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { supabase } from '../../lib/supabase'
 
-const orders = ref([
-  {
-    id: 1,
-    customer: 'John Doe',
-    product: 'iPhone 15 Pro',
-    quantity: 1,
-    amount: 1350000,
-    status: 'Pending',
-    date: '2026-07-23'
-  },
-  {
-    id: 2,
-    customer: 'Mary Johnson',
-    product: 'MacBook Air M3',
-    quantity: 2,
-    amount: 4200000,
-    status: 'Completed',
-    date: '2026-07-22'
+interface Order {
+  id: number
+  buyer_id: string
+  seller_id: string
+  product_id: number
+  quantity: number
+  amount: number
+  status: string
+  created_at: string
+  products?: {
+    name: string
   }
-])
+}
+
+const orders = ref<Order[]>([])
+const loading = ref(false)
+const error = ref('')
+
+const fetchOrders = async () => {
+  loading.value = true
+  error.value = ''
+
+  // Get logged in seller
+  const {
+    data: { user }
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    loading.value = false
+    return
+  }
+
+  const { data, error: supabaseError } = await supabase
+    .from('orders')
+    .select(`
+      *,
+      products(name)
+    `)
+    .eq('seller_id', user.id)
+    .order('created_at', { ascending: false })
+
+  if (supabaseError) {
+    error.value = supabaseError.message
+  } else {
+    orders.value = data || []
+  }
+
+  loading.value = false
+}
 
 const formatCurrency = (amount: number) => {
-  return `₦${amount.toLocaleString()}`
+  return `₦${Number(amount).toLocaleString()}`
 }
+
+const formatDate = (date: string) => {
+  return new Date(date).toLocaleDateString()
+}
+
+onMounted(() => {
+  fetchOrders()
+})
 </script>
 
 <template>
   <div class="container-fluid py-4">
 
-    <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
       <div>
         <h2 class="fw-bold">Orders</h2>
         <p class="text-muted">
-          Manage all orders placed for your products.
+          Manage orders placed for your products.
         </p>
       </div>
+    </div>
+
+    <!-- Error -->
+    <div
+      v-if="error"
+      class="alert alert-danger"
+    >
+      {{ error }}
     </div>
 
     <div class="card shadow-sm border-0 rounded-4">
@@ -49,9 +94,9 @@ const formatCurrency = (amount: number) => {
           <thead class="table-light">
             <tr>
               <th>#</th>
-              <th>Customer</th>
               <th>Product</th>
-              <th>Qty</th>
+              <th>Buyer</th>
+              <th>Quantity</th>
               <th>Amount</th>
               <th>Status</th>
               <th>Date</th>
@@ -60,25 +105,47 @@ const formatCurrency = (amount: number) => {
 
           <tbody>
 
+            <tr v-if="loading">
+              <td colspan="7" class="text-center py-5">
+                Loading orders...
+              </td>
+            </tr>
+
+            <tr
+              v-else-if="orders.length === 0"
+            >
+              <td colspan="7" class="text-center py-5">
+                No orders available.
+              </td>
+            </tr>
+
             <tr
               v-for="(order, index) in orders"
               :key="order.id"
             >
               <td>{{ index + 1 }}</td>
 
-              <td>{{ order.customer }}</td>
+              <td>
+                {{ order.products?.name }}
+              </td>
 
-              <td>{{ order.product }}</td>
+              <td>
+                {{ order.buyer_id }}
+              </td>
 
-              <td>{{ order.quantity }}</td>
+              <td>
+                {{ order.quantity }}
+              </td>
 
-              <td>{{ formatCurrency(order.amount) }}</td>
+              <td>
+                {{ formatCurrency(order.amount) }}
+              </td>
 
               <td>
                 <span
                   class="badge"
                   :class="{
-                    'bg-warning': order.status === 'Pending',
+                    'bg-warning text-dark': order.status === 'Pending',
                     'bg-success': order.status === 'Completed',
                     'bg-danger': order.status === 'Cancelled'
                   }"
@@ -87,14 +154,10 @@ const formatCurrency = (amount: number) => {
                 </span>
               </td>
 
-              <td>{{ order.date }}</td>
-
-            </tr>
-
-            <tr v-if="orders.length === 0">
-              <td colspan="7" class="text-center py-5">
-                No orders found.
+              <td>
+                {{ formatDate(order.created_at) }}
               </td>
+
             </tr>
 
           </tbody>
@@ -123,6 +186,6 @@ const formatCurrency = (amount: number) => {
 
 .badge {
   padding: 8px 12px;
-  font-size: 0.85rem;
+  font-size: .85rem;
 }
 </style>

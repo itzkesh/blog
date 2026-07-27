@@ -10,14 +10,19 @@ import Dashboard from '../views/users/Dashboard.vue'
 
 import AddProduct from '../views/users/AddProduct.vue'
 import Profile from '../views/users/Profile.vue'
+import Product from '../views/users/ProductPage.vue'
 import MyProducts from '../views/users/MyProducts.vue'
 import UserLayout from '../layout/UserLayout.vue'
 import AdminLayout from '../layout/AdminUserLayout.vue'
 import Orders from '../views/users/Orders.vue'
+import EdithPage from '../views/users/EdithPage.vue'
+import PublicView from '../views/users/PublicView.vue'
 
 const routes = [
 
     { path: '/', name: 'BlogPosts', component: BlogPosts },
+    {path: '/public-view/:id', name: 'PublicView', component: PublicView},
+
     {
      path: '/',
      component: UserLayout,
@@ -36,12 +41,17 @@ const routes = [
         children:[
             { path: 'dashboard', name: 'UserDashboard', component: Dashboard},
             { path: 'my-products', name: 'AdminMyProducts', component: MyProducts},
+            { path: 'my-product/:id', name: 'AdminProduct', component: Product},
             { path: 'products/add', name: 'AdminAddProduct', component: AddProduct},
-            { path: 'products/edit/:id', name: 'AdminEditProduct', component: AddProduct},
+            
             { path: 'profile', name: 'AdminProfile', component: Profile },
-            { path: 'orders', name: 'AdminOrders', component: Orders }
+            { path: 'orders', name: 'AdminOrders', component: Orders },
+            { path: 'edit/:id', name: 'AdminEditProduct', component: EdithPage }
+           
+            
         ]
     },
+    
  
 ]
 

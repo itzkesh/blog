@@ -206,8 +206,15 @@ onMounted(fetchProducts)
               <td>
 
                 <RouterLink
-                  :to="`/products/${product.id}/edit`"
+                  :to="`/auth/my-product/${product.id}`"
                   class="btn btn-sm btn-primary me-2"
+                >
+                  view
+                </RouterLink>
+
+                <RouterLink
+                  :to="`/auth/edit/${product.id}`"
+                  class="btn btn-sm btn-warning me-2"
                 >
                   Edit
                 </RouterLink>
