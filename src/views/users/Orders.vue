@@ -4,27 +4,29 @@ import { supabase } from '../../lib/supabase'
 
 interface Order {
   id: number
-  buyer_id: string
-  seller_id: string
-  product_id: number
+  order_code: string
+  customer_name: string
+  customer_email: string
+  customer_phone: string
+  customer_address: string
   quantity: number
-  amount: number
+  total_amount: number
   status: string
+  payment_status: string
   created_at: string
-  products?: {
+
+  products: {
     name: string
-  }
+    image_url: string
+  } | null
 }
 
 const orders = ref<Order[]>([])
-const loading = ref(false)
-const error = ref('')
+const loading = ref(true)
 
 const fetchOrders = async () => {
   loading.value = true
-  error.value = ''
 
-  // Get logged in seller
   const {
     data: { user }
   } = await supabase.auth.getUser()
@@ -34,158 +36,236 @@ const fetchOrders = async () => {
     return
   }
 
-  const { data, error: supabaseError } = await supabase
+  const { data, error } = await supabase
     .from('orders')
     .select(`
       *,
-      products(name)
+      products(
+        name,
+        image_url
+      )
     `)
     .eq('seller_id', user.id)
     .order('created_at', { ascending: false })
 
-  if (supabaseError) {
-    error.value = supabaseError.message
+  if (error) {
+    console.error(error.message)
   } else {
-    orders.value = data || []
+    orders.value = data as Order[]
   }
 
   loading.value = false
 }
 
-const formatCurrency = (amount: number) => {
-  return `₦${Number(amount).toLocaleString()}`
+const updateStatus = async (order: Order) => {
+  const { error } = await supabase
+    .from('orders')
+    .update({
+      status: order.status
+    })
+    .eq('id', order.id)
+
+  if (error) {
+    alert(error.message)
+  }
 }
 
-const formatDate = (date: string) => {
-  return new Date(date).toLocaleDateString()
-}
-
-onMounted(() => {
-  fetchOrders()
-})
+onMounted(fetchOrders)
 </script>
 
 <template>
-  <div class="container-fluid py-4">
+
+<div class="container-fluid py-4">
 
     <div class="d-flex justify-content-between align-items-center mb-4">
-      <div>
-        <h2 class="fw-bold">Orders</h2>
-        <p class="text-muted">
-          Manage orders placed for your products.
-        </p>
-      </div>
+
+        <div>
+
+            <h2 class="fw-bold">
+                Orders
+            </h2>
+
+            <p class="text-muted">
+                Orders placed by customers.
+            </p>
+
+        </div>
+
     </div>
 
-    <!-- Error -->
     <div
-      v-if="error"
-      class="alert alert-danger"
+        v-if="loading"
+        class="text-center py-5"
     >
-      {{ error }}
-    </div>
 
-    <div class="card shadow-sm border-0 rounded-4">
-
-      <div class="table-responsive">
-
-        <table class="table table-hover align-middle mb-0">
-
-          <thead class="table-light">
-            <tr>
-              <th>#</th>
-              <th>Product</th>
-              <th>Buyer</th>
-              <th>Quantity</th>
-              <th>Amount</th>
-              <th>Status</th>
-              <th>Date</th>
-            </tr>
-          </thead>
-
-          <tbody>
-
-            <tr v-if="loading">
-              <td colspan="7" class="text-center py-5">
-                Loading orders...
-              </td>
-            </tr>
-
-            <tr
-              v-else-if="orders.length === 0"
-            >
-              <td colspan="7" class="text-center py-5">
-                No orders available.
-              </td>
-            </tr>
-
-            <tr
-              v-for="(order, index) in orders"
-              :key="order.id"
-            >
-              <td>{{ index + 1 }}</td>
-
-              <td>
-                {{ order.products?.name }}
-              </td>
-
-              <td>
-                {{ order.buyer_id }}
-              </td>
-
-              <td>
-                {{ order.quantity }}
-              </td>
-
-              <td>
-                {{ formatCurrency(order.amount) }}
-              </td>
-
-              <td>
-                <span
-                  class="badge"
-                  :class="{
-                    'bg-warning text-dark': order.status === 'Pending',
-                    'bg-success': order.status === 'Completed',
-                    'bg-danger': order.status === 'Cancelled'
-                  }"
-                >
-                  {{ order.status }}
-                </span>
-              </td>
-
-              <td>
-                {{ formatDate(order.created_at) }}
-              </td>
-
-            </tr>
-
-          </tbody>
-
-        </table>
-
-      </div>
+        <div class="spinner-border text-primary"></div>
 
     </div>
 
-  </div>
+    <div
+        v-else-if="orders.length===0"
+        class="alert alert-info"
+    >
+        No orders yet.
+    </div>
+
+    <div
+        v-else
+        class="row g-4"
+    >
+
+        <div
+            v-for="order in orders"
+            :key="order.id"
+            class="col-lg-6"
+        >
+
+            <div class="card shadow border-0 h-100">
+
+                <div class="card-body">
+
+                    <div class="d-flex">
+
+                        <img
+                            :src="order.products?.image_url"
+                            width="120"
+                            height="120"
+                            class="rounded me-3"
+                            style="object-fit:cover"
+                        >
+
+                        <div>
+
+                            <h5 class="fw-bold">
+                                {{ order.products?.name }}
+                            </h5>
+
+                            <p class="text-primary fw-bold">
+                                ₦{{ Number(order.total_amount).toLocaleString() }}
+                            </p>
+
+                            <span class="badge bg-dark">
+                                {{ order.order_code }}
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                    <hr>
+
+                    <h6 class="fw-bold">
+                        Customer Information
+                    </h6>
+
+                    <p class="mb-1">
+                        <strong>Name:</strong>
+                        {{ order.customer_name }}
+                    </p>
+
+                    <p class="mb-1">
+                        <strong>Email:</strong>
+                        {{ order.customer_email }}
+                    </p>
+
+                    <p class="mb-1">
+                        <strong>Phone:</strong>
+                        {{ order.customer_phone }}
+                    </p>
+
+                    <p class="mb-1">
+                        <strong>Address:</strong>
+                        {{ order.customer_address }}
+                    </p>
+
+                    <p class="mb-3">
+                        <strong>Quantity:</strong>
+                        {{ order.quantity }}
+                    </p>
+
+                    <div class="row">
+
+                        <div class="col-md-6">
+
+                            <label class="form-label">
+                                Order Status
+                            </label>
+
+                            <select
+                                v-model="order.status"
+                                class="form-select"
+                            >
+
+                                <option>Pending</option>
+                                <option>Confirmed</option>
+                                <option>Processing</option>
+                                <option>Shipped</option>
+                                <option>Delivered</option>
+                                <option>Cancelled</option>
+
+                            </select>
+
+                        </div>
+
+                        <div class="col-md-6">
+
+                            <label class="form-label">
+                                Payment
+                            </label>
+
+                            <input
+                                class="form-control"
+                                :value="order.payment_status"
+                                disabled
+                            >
+
+                        </div>
+
+                    </div>
+
+                    <button
+                        class="btn btn-primary mt-4 w-100"
+                        @click="updateStatus(order)"
+                    >
+                        Update Order
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
 </template>
 
 <style scoped>
-.card {
-  border-radius: 18px;
+.card{
+    border-radius:20px;
+    transition:.3s;
 }
 
-.table th {
-  font-weight: 600;
+.card:hover{
+    transform:translateY(-5px);
 }
 
-.table td {
-  vertical-align: middle;
+img{
+    border:1px solid #eee;
 }
 
-.badge {
-  padding: 8px 12px;
-  font-size: .85rem;
+.badge{
+    font-size:.8rem;
+}
+
+.form-select,
+.form-control{
+    border-radius:10px;
+}
+
+.btn{
+    border-radius:10px;
 }
 </style>

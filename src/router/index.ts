@@ -17,11 +17,13 @@ import AdminLayout from '../layout/AdminUserLayout.vue'
 import Orders from '../views/users/Orders.vue'
 import EdithPage from '../views/users/EdithPage.vue'
 import PublicView from '../views/users/PublicView.vue'
+import PlaceOrder from '../views/users/PlaceOrder.vue'      
 
 const routes = [
 
     { path: '/', name: 'BlogPosts', component: BlogPosts },
     {path: '/public-view/:id', name: 'PublicView', component: PublicView},
+    {path: '/place-order/:id', name: 'PlaceOrder', component: PlaceOrder},
 
     {
      path: '/',
