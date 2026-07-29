@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { supabase } from '../../lib/supabase'
 
 interface Order {
@@ -23,6 +23,7 @@ interface Order {
 
 const orders = ref<Order[]>([])
 const loading = ref(true)
+const search = ref('')
 
 const fetchOrders = async () => {
   loading.value = true
@@ -57,6 +58,18 @@ const fetchOrders = async () => {
   loading.value = false
 }
 
+const filteredOrders = computed(() => {
+  return orders.value.filter(order => {
+    const keyword = search.value.toLowerCase()
+
+    return (
+      order.order_code.toLowerCase().includes(keyword) ||
+      order.customer_name.toLowerCase().includes(keyword) ||
+      order.products?.name.toLowerCase().includes(keyword)
+    )
+  })
+})
+
 const updateStatus = async (order: Order) => {
   const { error } = await supabase
     .from('orders')
@@ -75,21 +88,23 @@ onMounted(fetchOrders)
 
 <template>
 
-<div class="container-fluid py-4">
+<div class="container py-4">
 
     <div class="d-flex justify-content-between align-items-center mb-4">
 
         <div>
-
-            <h2 class="fw-bold">
-                Orders
-            </h2>
-
+            <h2 class="fw-bold">Orders</h2>
             <p class="text-muted">
-                Orders placed by customers.
+                Manage customer orders
             </p>
-
         </div>
+
+        <input
+            v-model="search"
+            type="text"
+            class="form-control search-box"
+            placeholder="Search orders..."
+        >
 
     </div>
 
@@ -97,142 +112,113 @@ onMounted(fetchOrders)
         v-if="loading"
         class="text-center py-5"
     >
-
         <div class="spinner-border text-primary"></div>
-
-    </div>
-
-    <div
-        v-else-if="orders.length===0"
-        class="alert alert-info"
-    >
-        No orders yet.
     </div>
 
     <div
         v-else
-        class="row g-4"
+        class="card shadow-sm border-0"
     >
 
-        <div
-            v-for="order in orders"
-            :key="order.id"
-            class="col-lg-6"
-        >
+        <div class="table-responsive">
 
-            <div class="card shadow border-0 h-100">
+            <table class="table table-hover align-middle mb-0">
 
-                <div class="card-body">
+                <thead class="table-light">
 
-                    <div class="d-flex">
+                    <tr>
+                        <th>Order</th>
+                        <th>Customer</th>
+                        <th>Product</th>
+                        <th>Qty</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                    </tr>
 
-                        <img
-                            :src="order.products?.image_url"
-                            width="120"
-                            height="120"
-                            class="rounded me-3"
-                            style="object-fit:cover"
-                        >
+                </thead>
 
-                        <div>
+                <tbody>
 
-                            <h5 class="fw-bold">
+                    <tr
+                        v-for="order in filteredOrders"
+                        :key="order.id"
+                    >
+
+                        <td>
+                            <strong>{{ order.order_code }}</strong>
+                        </td>
+
+                        <td>
+
+                            <div>{{ order.customer_name }}</div>
+
+                            <small class="text-muted">
+                                {{ order.customer_email }}
+                            </small>
+
+                        </td>
+
+                        <td>
+
+                            <div class="d-flex align-items-center">
+
+                                <img
+                                    :src="order.products?.image_url"
+                                    width="50"
+                                    height="50"
+                                    class="rounded me-3"
+                                    style="object-fit:cover"
+                                >
+
                                 {{ order.products?.name }}
-                            </h5>
 
-                            <p class="text-primary fw-bold">
-                                ₦{{ Number(order.total_amount).toLocaleString() }}
-                            </p>
+                            </div>
 
-                            <span class="badge bg-dark">
-                                {{ order.order_code }}
-                            </span>
+                        </td>
 
-                        </div>
+                        <td>
+                            {{ order.quantity }}
+                        </td>
 
-                    </div>
+                        <td>
+                            ₦{{ Number(order.total_amount).toLocaleString() }}
+                        </td>
 
-                    <hr>
-
-                    <h6 class="fw-bold">
-                        Customer Information
-                    </h6>
-
-                    <p class="mb-1">
-                        <strong>Name:</strong>
-                        {{ order.customer_name }}
-                    </p>
-
-                    <p class="mb-1">
-                        <strong>Email:</strong>
-                        {{ order.customer_email }}
-                    </p>
-
-                    <p class="mb-1">
-                        <strong>Phone:</strong>
-                        {{ order.customer_phone }}
-                    </p>
-
-                    <p class="mb-1">
-                        <strong>Address:</strong>
-                        {{ order.customer_address }}
-                    </p>
-
-                    <p class="mb-3">
-                        <strong>Quantity:</strong>
-                        {{ order.quantity }}
-                    </p>
-
-                    <div class="row">
-
-                        <div class="col-md-6">
-
-                            <label class="form-label">
-                                Order Status
-                            </label>
+                        <td>
 
                             <select
                                 v-model="order.status"
                                 class="form-select"
+                                @change="updateStatus(order)"
                             >
-
-                                <option>Pending</option>
-                                <option>Confirmed</option>
-                                <option>Processing</option>
-                                <option>Shipped</option>
-                                <option>Delivered</option>
-                                <option>Cancelled</option>
-
+                                <option value="Pending">Pending</option>
+                                <option value="Completed">Completed</option>
+                                <option value="Cancelled">Cancelled</option>
                             </select>
 
-                        </div>
+                        </td>
 
-                        <div class="col-md-6">
+                        <td>
+                            {{ new Date(order.created_at).toLocaleDateString() }}
+                        </td>
 
-                            <label class="form-label">
-                                Payment
-                            </label>
+                    </tr>
 
-                            <input
-                                class="form-control"
-                                :value="order.payment_status"
-                                disabled
-                            >
+                    <tr v-if="filteredOrders.length === 0">
 
-                        </div>
+                        <td
+                            colspan="7"
+                            class="text-center py-5"
+                        >
+                            No orders found.
+                        </td>
 
-                    </div>
+                    </tr>
 
-                    <button
-                        class="btn btn-primary mt-4 w-100"
-                        @click="updateStatus(order)"
-                    >
-                        Update Order
-                    </button>
+                </tbody>
 
-                </div>
-
-            </div>
+            </table>
 
         </div>
 
@@ -244,25 +230,29 @@ onMounted(fetchOrders)
 
 <style scoped>
 .card{
-    border-radius:20px;
-    transition:.3s;
+    border-radius:18px;
 }
 
-.card:hover{
-    transform:translateY(-5px);
+.search-box{
+    width:320px;
+    border-radius:10px;
+}
+
+.table th{
+    font-weight:600;
+}
+
+.table td{
+    vertical-align:middle;
 }
 
 img{
     border:1px solid #eee;
 }
 
-.badge{
-    font-size:.8rem;
-}
-
-.form-select,
-.form-control{
+.form-select{
     border-radius:10px;
+    min-width:150px;
 }
 
 .btn{

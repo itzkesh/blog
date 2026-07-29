@@ -1,6 +1,25 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { supabase } from '../lib/supabase'
+import { useCartStore } from '../stores/cart'
+
+const cart = useCartStore()
+
+
+const addProduct = (product:any) => {
+
+  cart.addToCart({
+    id: product.id,
+    seller_id: product.seller_id,
+    name: product.name,
+    price: Number(product.price),
+    image_url: product.image_url,
+    quantity: 1
+  })
+
+  alert('Added to cart')
+
+}
 
 interface Category {
   id: number
@@ -203,12 +222,13 @@ onMounted(getData)
                 >
                   View Product
                 </RouterLink>
-                <RouterLink
-               :to="`/place-order/${product.id}`"
-                class="btn btn-success btn-lg w-100"
+               <button
+  class="btn btn-warning w-100 mt-2"
+  @click="addProduct(product)"
 >
-               Buy Now
-                 </RouterLink>
+  <i class="bi bi-cart-plus me-2"></i>
+  Add to Cart
+</button>
 
               </div>
 
@@ -223,6 +243,26 @@ onMounted(getData)
     </div>
 
   </div>
+
+<div class="container fixed-bottom mb-3 d-flex justify-content-end">
+    <RouterLink
+  to="/cart"
+  class="btn btn-outline-dark position-relative"
+>
+
+<i class="bi bi-cart3 fs-4"></i>
+
+<span
+v-if="cart.totalItems"
+class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+>
+
+{{ cart.totalItems }}
+
+</span>
+
+</RouterLink>
+</div>
 </template>
 
 <style scoped>
