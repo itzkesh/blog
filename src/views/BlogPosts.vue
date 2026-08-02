@@ -5,9 +5,9 @@ import { useCartStore } from '../stores/cart'
 
 const cart = useCartStore()
 
+const search = ref('')
 
-const addProduct = (product:any) => {
-
+const addProduct = (product: any) => {
   cart.addToCart({
     id: product.id,
     seller_id: product.seller_id,
@@ -17,8 +17,7 @@ const addProduct = (product:any) => {
     quantity: 1
   })
 
-  alert('Added to cart')
-
+  alert('Product added to cart!')
 }
 
 interface Category {
@@ -29,6 +28,7 @@ interface Category {
 
 interface Product {
   id: number
+  seller_id: string
   name: string
   description: string
   price: number
@@ -68,167 +68,141 @@ const getData = async () => {
   loading.value = false
 }
 
+const filteredProducts = computed(() => {
+  if (!search.value) return products.value
+
+  return products.value.filter(product =>
+    product.name.toLowerCase().includes(search.value.toLowerCase())
+  )
+})
+
 const productsByCategory = computed(() => {
   return categories.value.map(category => ({
     ...category,
-    products: products.value.filter(
+    products: filteredProducts.value.filter(
       product => product.category_id === category.id
     )
   }))
 })
 
 onMounted(getData)
-
 </script>
 
 <template>
-  <div class="marketplace-page">
 
-    <!-- Hero -->
-    <section class="hero-section">
+<div class="marketplace">
 
-      <div class="container">
+  <!-- HERO -->
 
-        <div class="hero-content text-center">
+  <section class="hero">
 
-          <span class="hero-badge">
-            🛒 Welcome to the Marketplace
+    <div class="container">
+
+      <div class="row align-items-center">
+
+        <div class="col-lg-6">
+
+          <span class="hero-tag">
+            TRENDING NOW
           </span>
 
-          <h1 class="display-4 fw-bold mt-4">
-            Discover Amazing Products
+          <h1 class="hero-title">
+            Discover Products
+            <br>
+            You'll Love
           </h1>
 
           <p class="hero-text">
-            Shop thousands of quality products from trusted sellers across different categories.
+            Shop the latest products from trusted sellers.
+            Browse electronics, fashion, automobiles,
+            beauty, furniture and much more.
           </p>
 
-        </div>
+          <div class="hero-buttons">
 
-      </div>
+            <RouterLink
+              to="#products"
+              class="btn btn-warning btn-lg"
+            >
+              Shop Now
+            </RouterLink>
 
-      <div class="hero-shape hero-shape-1"></div>
-      <div class="hero-shape hero-shape-2"></div>
+            <button
+              class="btn btn-light btn-lg ms-3"
+            >
+              Explore Categories
+            </button>
 
-    </section>
+          </div>
 
-    <div class="container py-5">
+          <div class="hero-stats mt-5">
 
-      <!-- Loading -->
-      <div
-        v-if="loading"
-        class="text-center py-5"
-      >
-        <div class="spinner-border text-primary"></div>
-      </div>
+            <div>
 
-      <!-- Error -->
-      <div
-        v-else-if="error"
-        class="alert alert-danger"
-      >
-        {{ error }}
-      </div>
+              <h3>{{ products.length }}+</h3>
 
-      <!-- Empty -->
-      <div
-        v-else-if="products.length === 0"
-        class="alert alert-info text-center"
-      >
-        No products available.
-      </div>
+              <small>Products</small>
 
-      <!-- Categories -->
-      <section
-        v-for="category in productsByCategory"
-        :key="category.id"
-        class="category-section"
-      >
+            </div>
 
-        <div class="category-header">
+            <div>
 
-          <div>
+              <h3>{{ categories.length }}</h3>
 
-            <span class="category-badge">
-              {{ category.products.length }} Products
-            </span>
+              <small>Categories</small>
 
-            <h2 class="mt-3">
-              {{ category.name }}
-            </h2>
+            </div>
+
+            <div>
+
+              <h3>100%</h3>
+
+              <small>Trusted Sellers</small>
+
+            </div>
 
           </div>
 
         </div>
 
-        <div
-          v-if="category.products.length === 0"
-          class="empty-category"
-        >
-          No products available in this category.
-        </div>
+        <!-- HERO IMAGE -->
 
-        <div
-          v-else
-          class="row g-4"
-        >
+        <div class="col-lg-6">
 
-          <div
-            v-for="product in category.products"
-            :key="product.id"
-            class="col-xl-3 col-lg-4 col-md-6"
-          >
+          <div class="hero-image">
 
-            <div class="product-card">
+            <img
+              src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=900"
+              class="img-fluid rounded-5"
+            >
 
-              <div class="image-wrapper">
+            <div class="floating-card card-one">
 
-                <img
-                  :src="product.image_url"
-                  class="card-img-top"
-                >
+              <img
+                src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=300"
+              >
 
-                <span class="new-badge">
-                  New
-                </span>
+              <div>
+
+                <h6>Nike Air Max</h6>
+
+                <small>₦299,000</small>
 
               </div>
 
-              <div class="card-body">
+            </div>
 
-                <h5>
-                  {{ product.name }}
-                </h5>
+            <div class="floating-card card-two">
 
-                <p class="description">
-                  {{ product.description.substring(0,90) }}...
-                </p>
+              <img
+                src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=300"
+              >
 
-                <div class="price-row">
+              <div>
 
-                  <h4>
-                    ₦{{ Number(product.price).toLocaleString() }}
-                  </h4>
+                <h6>iPhone</h6>
 
-                  <span>
-                    {{ product.quantity }} left
-                  </span>
-
-                </div>
-
-                <RouterLink
-                  :to="`/public-view/${product.id}`"
-                  class="btn btn-shop w-100"
-                >
-                  View Product
-                </RouterLink>
-               <button
-  class="btn btn-warning w-100 mt-2"
-  @click="addProduct(product)"
->
-  <i class="bi bi-cart-plus me-2"></i>
-  Add to Cart
-</button>
+                <small>₦1,200,000</small>
 
               </div>
 
@@ -238,431 +212,693 @@ onMounted(getData)
 
         </div>
 
-      </section>
+      </div>
 
     </div>
 
+  </section>
+
+  <!-- SEARCH -->
+
+  <section class="container py-5">
+
+    <div class="search-box">
+
+      <i class="bi bi-search"></i>
+
+      <input
+        v-model="search"
+        class="form-control"
+        placeholder="Search for products..."
+      >
+
+      <RouterLink
+        to="/cart"
+        class="btn btn-dark position-relative"
+      >
+
+        <i class="bi bi-cart3"></i>
+
+        <span
+          v-if="cart.totalItems"
+          class="badge bg-danger position-absolute top-0 start-100 translate-middle"
+        >
+          {{ cart.totalItems }}
+        </span>
+
+      </RouterLink>
+
+    </div>
+
+  </section>
+
+  <!-- PRODUCTS -->
+
+<section
+  id="products"
+  class="container pb-5"
+>
+
+  <!-- Loading -->
+
+  <div
+    v-if="loading"
+    class="text-center py-5"
+  >
+    <div class="spinner-border text-primary"></div>
   </div>
 
-<div class="container fixed-bottom mb-3 d-flex justify-content-end">
-    <RouterLink
-  to="/cart"
-  class="btn btn-outline-dark position-relative"
->
+  <!-- Error -->
 
-<i class="bi bi-cart3 fs-4"></i>
+  <div
+    v-else-if="error"
+    class="alert alert-danger"
+  >
+    {{ error }}
+  </div>
 
-<span
-v-if="cart.totalItems"
-class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
->
+  <!-- Empty -->
 
-{{ cart.totalItems }}
+  <div
+    v-else-if="products.length === 0"
+    class="alert alert-info"
+  >
+    No products found.
+  </div>
 
-</span>
+  <!-- CATEGORY LOOP -->
 
-</RouterLink>
+  <section
+    v-for="category in productsByCategory"
+    :key="category.id"
+    class="mb-5"
+  >
+
+    <!-- CATEGORY HEADER -->
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+      <div>
+
+        <span class="category-label">
+          {{ category.products.length }} Products
+        </span>
+
+        <h2 class="fw-bold mt-2">
+          {{ category.name }}
+        </h2>
+
+      </div>
+
+      <RouterLink
+        :to="`/category/${category.slug}`"
+        class="view-all"
+      >
+        View All
+        <i class="bi bi-arrow-right"></i>
+      </RouterLink>
+
+    </div>
+
+    <!-- EMPTY CATEGORY -->
+
+    <div
+      v-if="category.products.length === 0"
+      class="empty-box"
+    >
+      <i class="bi bi-box fs-1 mb-3"></i>
+
+      <h5>No Products</h5>
+
+      <p class="text-muted mb-0">
+        There are currently no products in this category.
+      </p>
+
+    </div>
+
+    <!-- PRODUCTS -->
+
+    <div
+      v-else
+      class="row g-4"
+    >
+
+      <div
+        v-for="product in category.products"
+        :key="product.id"
+        class="col-xl-3 col-lg-4 col-md-6"
+      >
+
+        <div class="product-card">
+
+          <!-- IMAGE -->
+
+          <div class="product-image">
+
+            <img
+              :src="product.image_url"
+              class="img-fluid"
+            >
+
+            <span class="sale-badge">
+              New
+            </span>
+
+            <button class="wishlist-btn">
+
+              <i class="bi bi-heart"></i>
+
+            </button>
+
+          </div>
+
+          <!-- BODY -->
+
+          <div class="product-body">
+
+            <small class="text-primary fw-semibold">
+
+              {{ category.name }}
+
+            </small>
+
+            <h5 class="mt-2">
+
+              {{ product.name }}
+
+            </h5>
+
+            <p class="text-muted">
+
+              {{ product.description.substring(0,70) }}...
+
+            </p>
+
+            <!-- PRICE -->
+
+            <div class="price-section">
+
+              <div>
+
+                <h4>
+
+                  ₦{{ Number(product.price).toLocaleString() }}
+
+                </h4>
+
+                <small>
+
+                  {{ product.quantity }} left
+
+                </small>
+
+              </div>
+
+              <div class="rating">
+
+                ⭐ 4.9
+
+              </div>
+
+            </div>
+
+            <!-- BUTTONS -->
+
+            <div class="d-grid gap-2 mt-4">
+
+              <RouterLink
+                :to="`/public-view/${product.id}`"
+                class="btn btn-outline-primary"
+              >
+                <i class="bi bi-eye me-2"></i>
+
+                View Product
+              </RouterLink>
+
+              <button
+                class="btn btn-warning"
+                @click="addProduct(product)"
+              >
+
+                <i class="bi bi-cart-plus me-2"></i>
+
+                Add To Cart
+
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </section>
+
+</section>
+
 </div>
+
 </template>
 
 <style scoped>
 
-.marketplace-page{
+/* ===========================
+   GLOBAL
+=========================== */
 
-    background:#f4f8ff;
-
+.marketplace{
+    background:#f5f7fb;
     min-height:100vh;
-
 }
 
-/* HERO */
+.container{
+    max-width:1320px;
+}
 
-.hero-section{
+/* ===========================
+   HERO
+=========================== */
 
+.hero{
     position:relative;
-
     overflow:hidden;
-
+    background:linear-gradient(135deg,#2563eb,#4338ca);
     padding:100px 0;
-
-    background:linear-gradient(135deg,#2563eb,#4f46e5);
-
+    color:#fff;
 }
 
-.hero-content{
-
-    position:relative;
-
-    z-index:2;
-
+.hero::before{
+    content:"";
+    position:absolute;
+    width:450px;
+    height:450px;
+    background:rgba(255,255,255,.08);
+    border-radius:50%;
+    top:-180px;
+    right:-100px;
 }
 
-.hero-badge{
+.hero::after{
+    content:"";
+    position:absolute;
+    width:300px;
+    height:300px;
+    background:rgba(255,255,255,.05);
+    border-radius:50%;
+    bottom:-120px;
+    left:-120px;
+}
 
+.hero-tag{
     display:inline-block;
-
-    background:white;
-
+    background:#fff;
     color:#2563eb;
-
-    padding:10px 25px;
-
-    border-radius:50px;
-
+    padding:10px 24px;
+    border-radius:40px;
     font-weight:700;
-
-    box-shadow:0 10px 30px rgba(0,0,0,.15);
-
+    letter-spacing:.5px;
 }
 
-.hero-section h1{
-
-    color:white;
-
+.hero-title{
+    font-size:4rem;
+    font-weight:800;
+    line-height:1.1;
+    margin-top:25px;
 }
 
 .hero-text{
-
-    max-width:650px;
-
-    margin:auto;
-
-    color:#e5e7eb;
-
+    margin-top:25px;
     font-size:18px;
-
+    color:#e8ecff;
+    max-width:520px;
 }
 
-.hero-shape{
-
-    position:absolute;
-
-    border-radius:50%;
-
-    background:rgba(255,255,255,.08);
-
+.hero-buttons{
+    margin-top:40px;
 }
 
-.hero-shape-1{
-
-    width:350px;
-
-    height:350px;
-
-    top:-120px;
-
-    left:-120px;
-
-}
-
-.hero-shape-2{
-
-    width:280px;
-
-    height:280px;
-
-    bottom:-100px;
-
-    right:-80px;
-
-}
-
-/* CATEGORY */
-
-.category-section{
-
-    margin-bottom:80px;
-
-}
-
-.category-header{
-
-    display:flex;
-
-    justify-content:space-between;
-
-    align-items:center;
-
-    margin-bottom:35px;
-
-}
-
-.category-header h2{
-
-    font-weight:700;
-
-    color:#1f2937;
-
-}
-
-.category-badge{
-
-    background:#dbeafe;
-
-    color:#1d4ed8;
-
-    padding:8px 18px;
-
+.hero-buttons .btn{
     border-radius:50px;
-
+    padding:14px 35px;
     font-weight:600;
-
 }
 
-/* CARD */
+.hero-stats{
+    display:flex;
+    gap:50px;
+}
+
+.hero-stats h3{
+    font-weight:700;
+    margin-bottom:4px;
+}
+
+.hero-stats small{
+    color:#d8dfff;
+}
+
+/* ===========================
+ HERO IMAGE
+=========================== */
+
+.hero-image{
+    position:relative;
+}
+
+.hero-image img{
+    border-radius:30px;
+    box-shadow:0 30px 60px rgba(0,0,0,.25);
+}
+
+.floating-card{
+    position:absolute;
+    background:#fff;
+    display:flex;
+    gap:15px;
+    align-items:center;
+    padding:15px;
+    border-radius:18px;
+    box-shadow:0 20px 45px rgba(0,0,0,.12);
+    animation:float 4s ease-in-out infinite;
+}
+
+.floating-card img{
+    width:60px;
+    height:60px;
+    object-fit:cover;
+    border-radius:12px;
+}
+
+.card-one{
+    left:-40px;
+    top:80px;
+}
+
+.card-two{
+    right:-35px;
+    bottom:70px;
+}
+
+/* ===========================
+ SEARCH
+=========================== */
+
+.search-box{
+    background:#fff;
+    padding:18px;
+    border-radius:18px;
+    display:flex;
+    align-items:center;
+    gap:15px;
+    box-shadow:0 12px 35px rgba(0,0,0,.08);
+    margin-top:-50px;
+    position:relative;
+    z-index:100;
+}
+
+.search-box i{
+    font-size:22px;
+    color:#2563eb;
+}
+
+.search-box input{
+    border:none;
+    box-shadow:none;
+    font-size:16px;
+}
+
+.search-box .btn{
+    border-radius:12px;
+    width:55px;
+    height:55px;
+}
+
+/* ===========================
+ CATEGORY
+=========================== */
+
+.category-label{
+    display:inline-block;
+    background:#dbeafe;
+    color:#2563eb;
+    padding:8px 18px;
+    border-radius:50px;
+    font-size:14px;
+    font-weight:700;
+}
+
+.view-all{
+    color:#2563eb;
+    font-weight:600;
+    text-decoration:none;
+}
+
+.view-all:hover{
+    color:#1d4ed8;
+}
+
+/* ===========================
+ PRODUCT CARD
+=========================== */
 
 .product-card{
-
-    background:white;
-
-    border-radius:22px;
-
+    background:#fff;
+    border-radius:24px;
     overflow:hidden;
-
-    transition:.4s;
-
-    box-shadow:0 15px 35px rgba(0,0,0,.08);
-
+    transition:.35s;
+    box-shadow:0 15px 40px rgba(0,0,0,.08);
     height:100%;
-
 }
 
 .product-card:hover{
-
     transform:translateY(-12px);
-
-    box-shadow:0 25px 60px rgba(0,0,0,.15);
-
+    box-shadow:0 25px 60px rgba(0,0,0,.16);
 }
 
-.image-wrapper{
-
+.product-image{
     position:relative;
-
     overflow:hidden;
-
-    height:240px;
-
+    height:260px;
 }
 
-.card-img-top{
-
+.product-image img{
     width:100%;
-
     height:100%;
-
     object-fit:cover;
-
     transition:.5s;
-
 }
 
-.product-card:hover .card-img-top{
-
+.product-card:hover img{
     transform:scale(1.08);
-
 }
 
-.new-badge{
+/* ===========================
+ BADGES
+=========================== */
 
+.sale-badge{
     position:absolute;
-
-    top:15px;
-
-    right:15px;
-
+    top:18px;
+    left:18px;
     background:#ef4444;
-
-    color:white;
-
-    padding:8px 15px;
-
+    color:#fff;
+    padding:8px 16px;
     border-radius:30px;
-
     font-size:13px;
-
     font-weight:600;
-
 }
 
-.card-body{
-
-    padding:24px;
-
-}
-
-.card-body h5{
-
-    font-weight:700;
-
-    margin-bottom:10px;
-
-}
-
-.description{
-
-    color:#6b7280;
-
-    min-height:60px;
-
-}
-
-.price-row{
-
-    display:flex;
-
-    justify-content:space-between;
-
-    align-items:center;
-
-    margin:25px 0;
-
-}
-
-.price-row h4{
-
-    color:#2563eb;
-
-    font-weight:700;
-
-}
-
-.price-row span{
-
-    background:#dcfce7;
-
-    color:#15803d;
-
-    padding:6px 12px;
-
-    border-radius:30px;
-
-    font-size:13px;
-
-    font-weight:600;
-
-}
-
-/* BUTTON */
-
-.btn-shop{
-
-    background:linear-gradient(135deg,#2563eb,#4f46e5);
-
+.wishlist-btn{
+    position:absolute;
+    right:18px;
+    top:18px;
+    width:42px;
+    height:42px;
     border:none;
-
-    border-radius:12px;
-
-    color:white;
-
-    padding:12px;
-
-    font-weight:600;
-
+    border-radius:50%;
+    background:#fff;
+    box-shadow:0 10px 25px rgba(0,0,0,.12);
     transition:.3s;
-
 }
 
-.btn-shop:hover{
-
-    transform:translateY(-3px);
-
-    box-shadow:0 12px 30px rgba(37,99,235,.35);
-
+.wishlist-btn:hover{
+    background:#ef4444;
+    color:#fff;
 }
 
-/* EMPTY */
+/* ===========================
+ BODY
+=========================== */
 
-.empty-category{
+.product-body{
+    padding:24px;
+}
 
-    background:white;
+.product-body h5{
+    font-weight:700;
+    margin:10px 0;
+}
 
-    border-radius:15px;
+.product-body p{
+    min-height:60px;
+}
 
-    padding:40px;
+/* ===========================
+ PRICE
+=========================== */
 
+.price-section{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:20px;
+}
+
+.price-section h4{
+    color:#2563eb;
+    font-weight:700;
+}
+
+.rating{
+    background:#fff7d6;
+    color:#d97706;
+    padding:8px 14px;
+    border-radius:30px;
+    font-size:14px;
+    font-weight:600;
+}
+
+/* ===========================
+ BUTTONS
+=========================== */
+
+.btn-warning{
+    background:#fbbf24;
+    border:none;
+    color:#111827;
+    font-weight:600;
+}
+
+.btn-warning:hover{
+    background:#f59e0b;
+}
+
+.btn-outline-primary{
+    border-radius:12px;
+}
+
+.btn-warning,
+.btn-outline-primary{
+    padding:12px;
+    border-radius:12px;
+    transition:.3s;
+}
+
+.btn-warning:hover,
+.btn-outline-primary:hover{
+    transform:translateY(-2px);
+}
+
+/* ===========================
+ EMPTY STATE
+=========================== */
+
+.empty-box{
+    background:#fff;
+    padding:70px 30px;
     text-align:center;
-
-    color:#6b7280;
-
-    box-shadow:0 10px 25px rgba(0,0,0,.05);
-
+    border-radius:20px;
+    box-shadow:0 15px 35px rgba(0,0,0,.08);
 }
 
-/* ANIMATIONS */
+/* ===========================
+ ANIMATIONS
+=========================== */
+
+@keyframes float{
+
+    0%{
+        transform:translateY(0);
+    }
+
+    50%{
+        transform:translateY(-15px);
+    }
+
+    100%{
+        transform:translateY(0);
+    }
+
+}
 
 .product-card{
-
-    animation:fadeUp .7s ease;
-
-}
-
-.category-header{
-
-    animation:slideIn .7s ease;
-
+    animation:fadeUp .8s ease;
 }
 
 @keyframes fadeUp{
 
     from{
-
         opacity:0;
-
-        transform:translateY(40px);
-
+        transform:translateY(50px);
     }
 
     to{
-
         opacity:1;
-
         transform:translateY(0);
-
     }
 
 }
 
-@keyframes slideIn{
+/* ===========================
+ RESPONSIVE
+=========================== */
 
-    from{
+@media(max-width:992px){
 
-        opacity:0;
-
-        transform:translateX(-40px);
-
+    .hero{
+        text-align:center;
+        padding:80px 0;
     }
 
-    to{
+    .hero-title{
+        font-size:3rem;
+    }
 
-        opacity:1;
+    .hero-text{
+        margin:auto;
+    }
 
-        transform:translateX(0);
+    .hero-buttons{
+        justify-content:center;
+    }
 
+    .hero-stats{
+        justify-content:center;
+        flex-wrap:wrap;
+    }
+
+    .floating-card{
+        display:none;
     }
 
 }
-
-/* RESPONSIVE */
 
 @media(max-width:768px){
 
-    .hero-section{
-
-        padding:70px 0;
-
+    .hero-title{
+        font-size:2.3rem;
     }
 
-    .hero-section h1{
-
-        font-size:2.2rem;
-
+    .search-box{
+        flex-direction:column;
     }
 
-    .image-wrapper{
-
-        height:200px;
-
+    .product-image{
+        height:220px;
     }
 
 }
