@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import navbar from '../components/Navbar.vue'
+import Footer from '../components/Footer.vue'
 import { ref, computed, onMounted } from 'vue'
 import { supabase } from '../lib/supabase'
 import { useCartStore } from '../stores/cart'
@@ -119,6 +120,8 @@ onMounted(getData)
 
 <template>
    <navbar />
+
+  
 
 <div class="marketplace">
 
@@ -487,6 +490,7 @@ onMounted(getData)
     </RouterLink>
 
 </div>
+ <Footer />
 
 </template>
 
