@@ -1,24 +1,10 @@
 <script setup lang="ts">
+import navbar from '../components/Navbar.vue'
 import { ref, computed, onMounted } from 'vue'
 import { supabase } from '../lib/supabase'
 import { useCartStore } from '../stores/cart'
 
 const cart = useCartStore()
-
-const search = ref('')
-
-const addProduct = (product: any) => {
-  cart.addToCart({
-    id: product.id,
-    seller_id: product.seller_id,
-    name: product.name,
-    price: Number(product.price),
-    image_url: product.image_url,
-    quantity: 1
-  })
-
-  alert('Product added to cart!')
-}
 
 interface Category {
   id: number
@@ -42,6 +28,21 @@ const categories = ref<Category[]>([])
 const products = ref<Product[]>([])
 const loading = ref(false)
 const error = ref('')
+const search = ref('')
+const selectedCategory = ref<number | null>(null)
+
+const addProduct = (product: Product) => {
+  cart.addToCart({
+    id: product.id,
+    seller_id: product.seller_id,
+    name: product.name,
+    price: Number(product.price),
+    image_url: product.image_url,
+    quantity: 1
+  })
+
+  alert('Product added to cart')
+}
 
 const getData = async () => {
   loading.value = true
@@ -59,7 +60,9 @@ const getData = async () => {
           *,
           product_categories(*)
         `)
-        .order('created_at', { ascending: false })
+        .order('created_at', {
+          ascending: false
+        })
     ])
 
   categories.value = categoryData || []
@@ -69,18 +72,44 @@ const getData = async () => {
 }
 
 const filteredProducts = computed(() => {
-  if (!search.value) return products.value
 
-  return products.value.filter(product =>
-    product.name.toLowerCase().includes(search.value.toLowerCase())
-  )
+  let data = products.value
+
+  if (selectedCategory.value) {
+    data = data.filter(
+      p => p.category_id === selectedCategory.value
+    )
+  }
+
+  if (search.value) {
+    data = data.filter(product =>
+      product.name
+        .toLowerCase()
+        .includes(search.value.toLowerCase())
+    )
+  }
+
+  return data
 })
 
-const productsByCategory = computed(() => {
+const groupedProducts = computed(() => {
+
+  if (selectedCategory.value) {
+
+    return [{
+      id: selectedCategory.value,
+      name:
+        categories.value.find(
+          c => c.id === selectedCategory.value
+        )?.name,
+      products: filteredProducts.value
+    }]
+  }
+
   return categories.value.map(category => ({
     ...category,
     products: filteredProducts.value.filter(
-      product => product.category_id === category.id
+      p => p.category_id === category.id
     )
   }))
 })
@@ -89,376 +118,373 @@ onMounted(getData)
 </script>
 
 <template>
+   <navbar />
 
 <div class="marketplace">
 
-  <!-- HERO -->
+    <!-- HERO -->
 
-  <section class="hero">
+    <section class="hero">
 
-    <div class="container">
+        <div class="container">
 
-      <div class="row align-items-center">
+            <div class="row align-items-center">
 
-        <div class="col-lg-6">
+                <div class="col-lg-6">
 
-          <span class="hero-tag">
-            TRENDING NOW
-          </span>
+                    <span class="hero-tag">
+                        🔥 Biggest Marketplace
+                    </span>
 
-          <h1 class="hero-title">
-            Discover Products
-            <br>
-            You'll Love
-          </h1>
+                    <h1 class="display-3 fw-bold mt-4">
 
-          <p class="hero-text">
-            Shop the latest products from trusted sellers.
-            Browse electronics, fashion, automobiles,
-            beauty, furniture and much more.
-          </p>
+                        Shop The Best
+                        Products
+                        Online
 
-          <div class="hero-buttons">
+                    </h1>
 
-            <RouterLink
-              to="#products"
-              class="btn btn-warning btn-lg"
-            >
-              Shop Now
-            </RouterLink>
+                    <p class="hero-text">
 
-            <button
-              class="btn btn-light btn-lg ms-3"
-            >
-              Explore Categories
-            </button>
+                        Discover thousands of quality
+                        products from verified sellers.
 
-          </div>
+                    </p>
 
-          <div class="hero-stats mt-5">
+                    <div class="hero-search">
 
-            <div>
+                        <input
+                            v-model="search"
+                            class="form-control"
+                            placeholder="Search products..."
+                        />
 
-              <h3>{{ products.length }}+</h3>
+                        <button>
 
-              <small>Products</small>
+                            <i class="bi bi-search"></i>
 
-            </div>
+                        </button>
 
-            <div>
+                    </div>
 
-              <h3>{{ categories.length }}</h3>
+                </div>
 
-              <small>Categories</small>
+                <div class="col-lg-6 text-center">
+
+                    <img
+                        src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=900"
+                        class="hero-image"
+                    >
+
+                </div>
 
             </div>
-
-            <div>
-
-              <h3>100%</h3>
-
-              <small>Trusted Sellers</small>
-
-            </div>
-
-          </div>
 
         </div>
 
-        <!-- HERO IMAGE -->
+        <div class="circle circle1"></div>
+        <div class="circle circle2"></div>
 
-        <div class="col-lg-6">
+    </section>
 
-          <div class="hero-image">
+    <!-- CATEGORY MENU -->
 
-            <img
-              src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=900"
-              class="img-fluid rounded-5"
-            >
+    <section class="category-menu">
 
-            <div class="floating-card card-one">
+        <div class="container">
 
-              <img
-                src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=300"
-              >
+            <div class="category-scroll">
 
-              <div>
+                <button
+                    class="category-pill"
+                    :class="{
+                        active:selectedCategory===null
+                    }"
+                    @click="selectedCategory=null"
+                >
 
-                <h6>Nike Air Max</h6>
+                    All Products
 
-                <small>₦299,000</small>
+                </button>
 
-              </div>
+                <button
+                    v-for="category in categories"
+                    :key="category.id"
+                    class="category-pill"
+                    :class="{
+                        active:selectedCategory===category.id
+                    }"
+                    @click="selectedCategory=category.id"
+                >
 
-            </div>
+                    {{ category.name }}
 
-            <div class="floating-card card-two">
-
-              <img
-                src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=300"
-              >
-
-              <div>
-
-                <h6>iPhone</h6>
-
-                <small>₦1,200,000</small>
-
-              </div>
+                </button>
 
             </div>
-
-          </div>
 
         </div>
 
-      </div>
+    </section>
 
-    </div>
+    <!-- FEATURED BANNER -->
 
-  </section>
+    <section class="container py-5">
 
-  <!-- SEARCH -->
+        <div class="featured-banner">
 
-  <section class="container py-5">
+            <div class="row align-items-center">
 
-    <div class="search-box">
+                <div class="col-lg-7">
 
-      <i class="bi bi-search"></i>
+                    <span class="sale-badge">
 
-      <input
-        v-model="search"
-        class="form-control"
-        placeholder="Search for products..."
-      >
+                        Up to 50% OFF
 
-      <RouterLink
+                    </span>
+
+                    <h2>
+
+                        Amazing Deals
+                        Every Day
+
+                    </h2>
+
+                    <p>
+
+                        Find the latest gadgets,
+                        fashion,
+                        automobiles,
+                        beauty products
+                        and much more.
+
+                    </p>
+
+                    <button class="btn btn-light btn-lg">
+
+                        Shop Now
+
+                    </button>
+
+                </div>
+
+                <div class="col-lg-5 text-center">
+
+                    <img
+                        src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=900"
+                        class="featured-image"
+                    >
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+        <!-- PRODUCTS -->
+
+    <section class="container pb-5">
+
+        <div
+            v-for="category in groupedProducts"
+            :key="category.id"
+            class="mb-5"
+        >
+
+            <div
+                v-if="category.products.length"
+                class="section-header"
+            >
+
+                <div>
+
+                    <span class="section-tag">
+
+                        {{ category.products.length }} Products
+
+                    </span>
+
+                    <h2 class="section-title">
+
+                        {{ category.name }}
+
+                    </h2>
+
+                </div>
+
+                <RouterLink
+                    to="/"
+                    class="see-all"
+                >
+
+                    See All
+
+                    <i class="bi bi-arrow-right ms-2"></i>
+
+                </RouterLink>
+
+            </div>
+
+            <div class="row g-4">
+
+                <div
+                    v-for="product in category.products"
+                    :key="product.id"
+                    class="col-xl-3 col-lg-4 col-md-6"
+                >
+
+                    <div class="product-card">
+
+                        <div class="product-image">
+
+                            <img
+                                :src="product.image_url"
+                            >
+
+                            <span class="discount">
+
+                                -20%
+
+                            </span>
+
+                            <button class="wishlist">
+
+                                <i class="bi bi-heart"></i>
+
+                            </button>
+
+                        </div>
+
+                        <div class="product-body">
+
+                            <small class="category-name">
+
+                                {{ product.product_categories.name }}
+
+                            </small>
+
+                            <h5>
+
+                                {{ product.name }}
+
+                            </h5>
+
+                            <p>
+
+                                {{
+                                    product.description.substring(0,70)
+                                }}...
+
+                            </p>
+
+                            <div class="rating">
+
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-half"></i>
+
+                                <span>
+
+                                    (4.8)
+
+                                </span>
+
+                            </div>
+
+                            <div class="price-area">
+
+                                <div>
+
+                                    <h4>
+
+                                        ₦{{ Number(product.price).toLocaleString() }}
+
+                                    </h4>
+
+                                    <small>
+
+                                        Stock:
+                                        {{ product.quantity }}
+
+                                    </small>
+
+                                </div>
+
+                                <span class="old-price">
+
+                                    ₦{{ Number(product.price * 1.2).toLocaleString() }}
+
+                                </span>
+
+                            </div>
+
+                            <div class="d-grid gap-2 mt-4">
+
+                                <RouterLink
+                                    :to="`/public-view/${product.id}`"
+                                    class="btn btn-view"
+                                >
+
+                                    View Product
+
+                                </RouterLink>
+
+                                <button
+                                    class="btn btn-cart"
+                                    @click="addProduct(product)"
+                                >
+
+                                    <i class="bi bi-cart-plus me-2"></i>
+
+                                    Add To Cart
+
+                                </button>
+
+                                <RouterLink
+                                    :to="`/place-order/${product.id}`"
+                                    class="btn btn-buy"
+                                >
+
+                                    Buy Now
+
+                                </RouterLink>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- FLOATING CART -->
+
+    <RouterLink
         to="/cart"
-        class="btn btn-dark position-relative"
-      >
+        class="floating-cart"
+    >
 
         <i class="bi bi-cart3"></i>
 
         <span
-          v-if="cart.totalItems"
-          class="badge bg-danger position-absolute top-0 start-100 translate-middle"
+            v-if="cart.totalItems"
+            class="cart-count"
         >
-          {{ cart.totalItems }}
+
+            {{ cart.totalItems }}
+
         </span>
 
-      </RouterLink>
-
-    </div>
-
-  </section>
-
-  <!-- PRODUCTS -->
-
-<section
-  id="products"
-  class="container pb-5"
->
-
-  <!-- Loading -->
-
-  <div
-    v-if="loading"
-    class="text-center py-5"
-  >
-    <div class="spinner-border text-primary"></div>
-  </div>
-
-  <!-- Error -->
-
-  <div
-    v-else-if="error"
-    class="alert alert-danger"
-  >
-    {{ error }}
-  </div>
-
-  <!-- Empty -->
-
-  <div
-    v-else-if="products.length === 0"
-    class="alert alert-info"
-  >
-    No products found.
-  </div>
-
-  <!-- CATEGORY LOOP -->
-
-  <section
-    v-for="category in productsByCategory"
-    :key="category.id"
-    class="mb-5"
-  >
-
-    <!-- CATEGORY HEADER -->
-
-    <div class="d-flex justify-content-between align-items-center mb-4">
-
-      <div>
-
-        <span class="category-label">
-          {{ category.products.length }} Products
-        </span>
-
-        <h2 class="fw-bold mt-2">
-          {{ category.name }}
-        </h2>
-
-      </div>
-
-      <RouterLink
-        :to="`/category/${category.slug}`"
-        class="view-all"
-      >
-        View All
-        <i class="bi bi-arrow-right"></i>
-      </RouterLink>
-
-    </div>
-
-    <!-- EMPTY CATEGORY -->
-
-    <div
-      v-if="category.products.length === 0"
-      class="empty-box"
-    >
-      <i class="bi bi-box fs-1 mb-3"></i>
-
-      <h5>No Products</h5>
-
-      <p class="text-muted mb-0">
-        There are currently no products in this category.
-      </p>
-
-    </div>
-
-    <!-- PRODUCTS -->
-
-    <div
-      v-else
-      class="row g-4"
-    >
-
-      <div
-        v-for="product in category.products"
-        :key="product.id"
-        class="col-xl-3 col-lg-4 col-md-6"
-      >
-
-        <div class="product-card">
-
-          <!-- IMAGE -->
-
-          <div class="product-image">
-
-            <img
-              :src="product.image_url"
-              class="img-fluid"
-            >
-
-            <span class="sale-badge">
-              New
-            </span>
-
-            <button class="wishlist-btn">
-
-              <i class="bi bi-heart"></i>
-
-            </button>
-
-          </div>
-
-          <!-- BODY -->
-
-          <div class="product-body">
-
-            <small class="text-primary fw-semibold">
-
-              {{ category.name }}
-
-            </small>
-
-            <h5 class="mt-2">
-
-              {{ product.name }}
-
-            </h5>
-
-            <p class="text-muted">
-
-              {{ product.description.substring(0,70) }}...
-
-            </p>
-
-            <!-- PRICE -->
-
-            <div class="price-section">
-
-              <div>
-
-                <h4>
-
-                  ₦{{ Number(product.price).toLocaleString() }}
-
-                </h4>
-
-                <small>
-
-                  {{ product.quantity }} left
-
-                </small>
-
-              </div>
-
-              <div class="rating">
-
-                ⭐ 4.9
-
-              </div>
-
-            </div>
-
-            <!-- BUTTONS -->
-
-            <div class="d-grid gap-2 mt-4">
-
-              <RouterLink
-                :to="`/public-view/${product.id}`"
-                class="btn btn-outline-primary"
-              >
-                <i class="bi bi-eye me-2"></i>
-
-                View Product
-              </RouterLink>
-
-              <button
-                class="btn btn-warning"
-                @click="addProduct(product)"
-              >
-
-                <i class="bi bi-cart-plus me-2"></i>
-
-                Add To Cart
-
-              </button>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      </div>
-
-    </div>
-
-  </section>
-
-</section>
+    </RouterLink>
 
 </div>
 
@@ -466,440 +492,521 @@ onMounted(getData)
 
 <style scoped>
 
-/* ===========================
-   GLOBAL
-=========================== */
+:root{
+  --primary:#5b21b6;
+  --secondary:#7c3aed;
+  --accent:#f97316;
+  --light:#f8f9ff;
+  --dark:#111827;
+}
 
 .marketplace{
-    background:#f5f7fb;
-    min-height:100vh;
+  background:#f5f7ff;
+  min-height:100vh;
 }
 
-.container{
-    max-width:1320px;
-}
-
-/* ===========================
-   HERO
-=========================== */
+/* ================= HERO ================= */
 
 .hero{
-    position:relative;
-    overflow:hidden;
-    background:linear-gradient(135deg,#2563eb,#4338ca);
-    padding:100px 0;
-    color:#fff;
+  position:relative;
+  overflow:hidden;
+  padding:90px 0 110px;
+  background:linear-gradient(135deg,#5b21b6,#7c3aed,#8b5cf6);
 }
 
 .hero::before{
-    content:"";
-    position:absolute;
-    width:450px;
-    height:450px;
-    background:rgba(255,255,255,.08);
-    border-radius:50%;
-    top:-180px;
-    right:-100px;
+  content:'';
+  position:absolute;
+  inset:0;
+  background:url("https://www.transparenttextures.com/patterns/cubes.png");
+  opacity:.08;
 }
 
-.hero::after{
-    content:"";
-    position:absolute;
-    width:300px;
-    height:300px;
-    background:rgba(255,255,255,.05);
-    border-radius:50%;
-    bottom:-120px;
-    left:-120px;
+.hero>.container{
+  position:relative;
+  z-index:2;
 }
 
 .hero-tag{
-    display:inline-block;
-    background:#fff;
-    color:#2563eb;
-    padding:10px 24px;
-    border-radius:40px;
-    font-weight:700;
-    letter-spacing:.5px;
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  background:white;
+  color:#5b21b6;
+  padding:10px 22px;
+  border-radius:40px;
+  font-weight:700;
+  box-shadow:0 15px 40px rgba(0,0,0,.15);
 }
 
-.hero-title{
-    font-size:4rem;
-    font-weight:800;
-    line-height:1.1;
-    margin-top:25px;
+.hero h1{
+  color:#fff;
+  line-height:1.15;
 }
 
 .hero-text{
-    margin-top:25px;
-    font-size:18px;
-    color:#e8ecff;
-    max-width:520px;
+  color:#ece8ff;
+  font-size:18px;
+  margin:25px 0;
+  max-width:520px;
 }
 
-.hero-buttons{
-    margin-top:40px;
+.hero-search{
+  display:flex;
+  background:#fff;
+  border-radius:60px;
+  overflow:hidden;
+  max-width:520px;
+  box-shadow:0 25px 50px rgba(0,0,0,.15);
 }
 
-.hero-buttons .btn{
-    border-radius:50px;
-    padding:14px 35px;
-    font-weight:600;
+.hero-search input{
+  border:none;
+  height:65px;
+  box-shadow:none;
+  padding-left:25px;
 }
 
-.hero-stats{
-    display:flex;
-    gap:50px;
+.hero-search button{
+  width:70px;
+  border:none;
+  background:var(--accent);
+  color:#fff;
+  font-size:22px;
 }
-
-.hero-stats h3{
-    font-weight:700;
-    margin-bottom:4px;
-}
-
-.hero-stats small{
-    color:#d8dfff;
-}
-
-/* ===========================
- HERO IMAGE
-=========================== */
 
 .hero-image{
-    position:relative;
+  width:100%;
+  max-width:520px;
+  animation:float 4s ease-in-out infinite;
+  filter:drop-shadow(0 35px 45px rgba(0,0,0,.3));
 }
 
-.hero-image img{
-    border-radius:30px;
-    box-shadow:0 30px 60px rgba(0,0,0,.25);
+.circle{
+  position:absolute;
+  border-radius:50%;
+  background:rgba(255,255,255,.08);
 }
 
-.floating-card{
-    position:absolute;
-    background:#fff;
-    display:flex;
-    gap:15px;
-    align-items:center;
-    padding:15px;
-    border-radius:18px;
-    box-shadow:0 20px 45px rgba(0,0,0,.12);
-    animation:float 4s ease-in-out infinite;
+.circle1{
+  width:380px;
+  height:380px;
+  left:-120px;
+  top:-120px;
 }
 
-.floating-card img{
-    width:60px;
-    height:60px;
-    object-fit:cover;
-    border-radius:12px;
+.circle2{
+  width:260px;
+  height:260px;
+  right:-70px;
+  bottom:-70px;
 }
 
-.card-one{
-    left:-40px;
-    top:80px;
+/* ================= CATEGORY ================= */
+
+.category-menu{
+  margin-top:-35px;
+  position:relative;
+  z-index:20;
 }
 
-.card-two{
-    right:-35px;
-    bottom:70px;
+.category-scroll{
+  background:#fff;
+  padding:18px;
+  border-radius:20px;
+  display:flex;
+  gap:15px;
+  overflow-x:auto;
+  box-shadow:0 15px 35px rgba(0,0,0,.08);
 }
 
-/* ===========================
- SEARCH
-=========================== */
-
-.search-box{
-    background:#fff;
-    padding:18px;
-    border-radius:18px;
-    display:flex;
-    align-items:center;
-    gap:15px;
-    box-shadow:0 12px 35px rgba(0,0,0,.08);
-    margin-top:-50px;
-    position:relative;
-    z-index:100;
+.category-scroll::-webkit-scrollbar{
+  display:none;
 }
 
-.search-box i{
-    font-size:22px;
-    color:#2563eb;
+.category-pill{
+  border:none;
+  background:#eef2ff;
+  color:#5b21b6;
+  font-weight:600;
+  padding:12px 24px;
+  border-radius:40px;
+  white-space:nowrap;
+  transition:.3s;
 }
 
-.search-box input{
-    border:none;
-    box-shadow:none;
-    font-size:16px;
+.category-pill:hover{
+  background:#5b21b6;
+  color:#fff;
 }
 
-.search-box .btn{
-    border-radius:12px;
-    width:55px;
-    height:55px;
+.category-pill.active{
+  background:#5b21b6;
+  color:#fff;
 }
 
-/* ===========================
- CATEGORY
-=========================== */
+/* ================= FEATURED ================= */
 
-.category-label{
-    display:inline-block;
-    background:#dbeafe;
-    color:#2563eb;
-    padding:8px 18px;
-    border-radius:50px;
-    font-size:14px;
-    font-weight:700;
+.featured-banner{
+  background:linear-gradient(135deg,#5b21b6,#8b5cf6);
+  border-radius:30px;
+  padding:60px;
+  color:#fff;
+  overflow:hidden;
+  position:relative;
+  box-shadow:0 25px 50px rgba(91,33,182,.3);
 }
 
-.view-all{
-    color:#2563eb;
-    font-weight:600;
-    text-decoration:none;
+.featured-banner::before{
+  content:'';
+  position:absolute;
+  right:-120px;
+  top:-80px;
+  width:320px;
+  height:320px;
+  border-radius:50%;
+  background:rgba(255,255,255,.08);
 }
 
-.view-all:hover{
-    color:#1d4ed8;
+.sale-badge{
+  display:inline-block;
+  background:#fff;
+  color:#5b21b6;
+  padding:10px 20px;
+  border-radius:40px;
+  font-weight:700;
 }
 
-/* ===========================
- PRODUCT CARD
-=========================== */
+.featured-banner h2{
+  font-size:3rem;
+  margin:25px 0;
+}
+
+.featured-banner p{
+  color:#ece8ff;
+  font-size:18px;
+}
+
+.featured-image{
+  width:100%;
+  max-width:350px;
+  animation:float 5s ease infinite;
+}
+/* ================= SECTION HEADER ================= */
+
+.section-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:30px;
+}
+
+.section-tag{
+  display:inline-block;
+  padding:8px 18px;
+  background:#ede9fe;
+  color:#5b21b6;
+  border-radius:30px;
+  font-weight:600;
+  font-size:.9rem;
+}
+
+.section-title{
+  font-size:2rem;
+  font-weight:800;
+  color:#111827;
+  margin-top:10px;
+}
+
+.see-all{
+  text-decoration:none;
+  color:#5b21b6;
+  font-weight:700;
+  transition:.3s;
+}
+
+.see-all:hover{
+  color:#7c3aed;
+}
+
+/* ================= PRODUCT CARD ================= */
 
 .product-card{
-    background:#fff;
-    border-radius:24px;
-    overflow:hidden;
-    transition:.35s;
-    box-shadow:0 15px 40px rgba(0,0,0,.08);
-    height:100%;
+  background:#fff;
+  border-radius:22px;
+  overflow:hidden;
+  box-shadow:0 15px 40px rgba(0,0,0,.08);
+  transition:.35s;
+  height:100%;
 }
 
 .product-card:hover{
-    transform:translateY(-12px);
-    box-shadow:0 25px 60px rgba(0,0,0,.16);
+  transform:translateY(-10px);
+  box-shadow:0 30px 60px rgba(0,0,0,.15);
 }
 
 .product-image{
-    position:relative;
-    overflow:hidden;
-    height:260px;
+  position:relative;
+  height:250px;
+  overflow:hidden;
 }
 
 .product-image img{
-    width:100%;
-    height:100%;
-    object-fit:cover;
-    transition:.5s;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  transition:.4s;
 }
 
 .product-card:hover img{
-    transform:scale(1.08);
+  transform:scale(1.08);
 }
 
-/* ===========================
- BADGES
-=========================== */
-
-.sale-badge{
-    position:absolute;
-    top:18px;
-    left:18px;
-    background:#ef4444;
-    color:#fff;
-    padding:8px 16px;
-    border-radius:30px;
-    font-size:13px;
-    font-weight:600;
+.discount{
+  position:absolute;
+  left:15px;
+  top:15px;
+  background:#ef4444;
+  color:#fff;
+  padding:6px 14px;
+  border-radius:30px;
+  font-size:.8rem;
+  font-weight:700;
 }
 
-.wishlist-btn{
-    position:absolute;
-    right:18px;
-    top:18px;
-    width:42px;
-    height:42px;
-    border:none;
-    border-radius:50%;
-    background:#fff;
-    box-shadow:0 10px 25px rgba(0,0,0,.12);
-    transition:.3s;
+.wishlist{
+  position:absolute;
+  right:15px;
+  top:15px;
+  width:42px;
+  height:42px;
+  border:none;
+  border-radius:50%;
+  background:#fff;
+  color:#ef4444;
+  font-size:18px;
+  box-shadow:0 8px 20px rgba(0,0,0,.15);
+  transition:.3s;
 }
 
-.wishlist-btn:hover{
-    background:#ef4444;
-    color:#fff;
+.wishlist:hover{
+  background:#ef4444;
+  color:#fff;
 }
-
-/* ===========================
- BODY
-=========================== */
 
 .product-body{
-    padding:24px;
+  padding:24px;
+}
+
+.category-name{
+  color:#7c3aed;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.5px;
 }
 
 .product-body h5{
-    font-weight:700;
-    margin:10px 0;
+  margin-top:10px;
+  font-weight:700;
+  color:#111827;
 }
 
 .product-body p{
-    min-height:60px;
-}
-
-/* ===========================
- PRICE
-=========================== */
-
-.price-section{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-top:20px;
-}
-
-.price-section h4{
-    color:#2563eb;
-    font-weight:700;
+  color:#6b7280;
+  min-height:55px;
+  margin:15px 0;
 }
 
 .rating{
-    background:#fff7d6;
-    color:#d97706;
-    padding:8px 14px;
-    border-radius:30px;
-    font-size:14px;
-    font-weight:600;
+  color:#f59e0b;
+  margin-bottom:18px;
 }
 
-/* ===========================
- BUTTONS
-=========================== */
-
-.btn-warning{
-    background:#fbbf24;
-    border:none;
-    color:#111827;
-    font-weight:600;
+.rating span{
+  color:#6b7280;
+  margin-left:8px;
 }
 
-.btn-warning:hover{
-    background:#f59e0b;
+.price-area{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
 }
 
-.btn-outline-primary{
-    border-radius:12px;
+.price-area h4{
+  color:#5b21b6;
+  font-weight:800;
 }
 
-.btn-warning,
-.btn-outline-primary{
-    padding:12px;
-    border-radius:12px;
-    transition:.3s;
+.old-price{
+  text-decoration:line-through;
+  color:#9ca3af;
 }
 
-.btn-warning:hover,
-.btn-outline-primary:hover{
-    transform:translateY(-2px);
+/* ================= BUTTONS ================= */
+
+.btn-view{
+  background:#5b21b6;
+  color:#fff;
+  border:none;
+  border-radius:12px;
+  padding:12px;
+  font-weight:600;
 }
 
-/* ===========================
- EMPTY STATE
-=========================== */
-
-.empty-box{
-    background:#fff;
-    padding:70px 30px;
-    text-align:center;
-    border-radius:20px;
-    box-shadow:0 15px 35px rgba(0,0,0,.08);
+.btn-view:hover{
+  background:#6d28d9;
+  color:#fff;
 }
 
-/* ===========================
- ANIMATIONS
-=========================== */
+.btn-cart{
+  background:#f59e0b;
+  color:#fff;
+  border:none;
+  border-radius:12px;
+  padding:12px;
+  font-weight:600;
+}
+
+.btn-cart:hover{
+  background:#ea580c;
+  color:#fff;
+}
+
+.btn-buy{
+  background:#16a34a;
+  color:#fff;
+  border:none;
+  border-radius:12px;
+  padding:12px;
+  font-weight:600;
+}
+
+.btn-buy:hover{
+  background:#15803d;
+  color:#fff;
+}
+
+/* ================= FLOATING CART ================= */
+
+.floating-cart{
+  position:fixed;
+  right:30px;
+  bottom:30px;
+  width:70px;
+  height:70px;
+  border-radius:50%;
+  background:linear-gradient(135deg,#5b21b6,#7c3aed);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  color:#fff;
+  text-decoration:none;
+  font-size:28px;
+  box-shadow:0 20px 45px rgba(91,33,182,.35);
+  z-index:999;
+  transition:.3s;
+}
+
+.floating-cart:hover{
+  transform:translateY(-6px) scale(1.08);
+  color:#fff;
+}
+
+.cart-count{
+  position:absolute;
+  top:-6px;
+  right:-6px;
+  width:28px;
+  height:28px;
+  border-radius:50%;
+  background:#ef4444;
+  color:#fff;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  font-size:.75rem;
+  font-weight:700;
+}
+
+/* ================= ANIMATIONS ================= */
 
 @keyframes float{
-
-    0%{
-        transform:translateY(0);
-    }
-
-    50%{
-        transform:translateY(-15px);
-    }
-
-    100%{
-        transform:translateY(0);
-    }
-
+  0%{transform:translateY(0);}
+  50%{transform:translateY(-15px);}
+  100%{transform:translateY(0);}
 }
 
 .product-card{
-    animation:fadeUp .8s ease;
+  animation:fadeUp .6s ease;
 }
 
 @keyframes fadeUp{
-
-    from{
-        opacity:0;
-        transform:translateY(50px);
-    }
-
-    to{
-        opacity:1;
-        transform:translateY(0);
-    }
-
+  from{
+    opacity:0;
+    transform:translateY(35px);
+  }
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
 }
 
-/* ===========================
- RESPONSIVE
-=========================== */
+/* ================= RESPONSIVE ================= */
 
-@media(max-width:992px){
+@media (max-width:992px){
 
-    .hero{
-        text-align:center;
-        padding:80px 0;
-    }
+  .hero{
+    text-align:center;
+    padding:70px 0;
+  }
 
-    .hero-title{
-        font-size:3rem;
-    }
+  .hero-search{
+    margin:auto;
+  }
 
-    .hero-text{
-        margin:auto;
-    }
+  .featured-banner{
+    padding:35px;
+    text-align:center;
+  }
 
-    .hero-buttons{
-        justify-content:center;
-    }
+  .featured-banner h2{
+    font-size:2.2rem;
+  }
 
-    .hero-stats{
-        justify-content:center;
-        flex-wrap:wrap;
-    }
+  .featured-image{
+    margin-top:30px;
+  }
 
-    .floating-card{
-        display:none;
-    }
+  .section-header{
+    flex-direction:column;
+    align-items:flex-start;
+    gap:15px;
+  }
 
 }
 
 @media(max-width:768px){
 
-    .hero-title{
-        font-size:2.3rem;
-    }
+  .hero h1{
+    font-size:2.3rem;
+  }
 
-    .search-box{
-        flex-direction:column;
-    }
+  .hero-image{
+    margin-top:40px;
+  }
 
-    .product-image{
-        height:220px;
-    }
+  .product-image{
+    height:220px;
+  }
+
+  .floating-cart{
+    width:60px;
+    height:60px;
+    font-size:24px;
+    right:20px;
+    bottom:20px;
+  }
 
 }
 
