@@ -29,7 +29,6 @@ const cartOpen = ref(false)
 const categories = ref<Category[]>([])
 const products = ref<Product[]>([])
 const loading = ref(false)
-const error = ref('')
 const search = ref('')
 const selectedCategory = ref<number | null>(null)
 
