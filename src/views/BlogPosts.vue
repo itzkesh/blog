@@ -25,6 +25,7 @@ interface Product {
   product_categories: Category
 }
 
+const cartOpen = ref(false)
 const categories = ref<Category[]>([])
 const products = ref<Product[]>([])
 const loading = ref(false)
@@ -446,14 +447,6 @@ onMounted(getData)
 
                                 </button>
 
-                                <RouterLink
-                                    :to="`/place-order/${product.id}`"
-                                    class="btn btn-buy"
-                                >
-
-                                    Buy Now
-
-                                </RouterLink>
 
                             </div>
 
@@ -469,27 +462,231 @@ onMounted(getData)
 
     </section>
 
-    <!-- FLOATING CART -->
+    <!-- Floating Cart Button -->
+<button
+  class="floating-cart"
+  @click="cartOpen = true"
+>
+  <i class="bi bi-cart3"></i>
 
-    <RouterLink
-        to="/cart"
-        class="floating-cart"
-    >
-
-        <i class="bi bi-cart3"></i>
-
-        <span
-            v-if="cart.totalItems"
-            class="cart-count"
-        >
-
-            {{ cart.totalItems }}
-
-        </span>
-
-    </RouterLink>
+  <span
+    v-if="cart.totalItems > 0"
+    class="cart-count"
+  >
+    {{ cart.totalItems }}
+  </span>
+</button>
 
 </div>
+<!-- CART OVERLAY -->
+<Transition name="cart-fade">
+
+  <div
+    v-if="cartOpen"
+    class="cart-overlay"
+    @click.self="cartOpen = false"
+  >
+
+    <!-- CART DRAWER -->
+    <Transition name="cart-slide">
+
+      <div class="cart-drawer">
+
+        <!-- Header -->
+        <div class="cart-header">
+
+          <div>
+            <h3>
+              <i class="bi bi-cart3 me-2"></i>
+              Your Cart
+            </h3>
+
+            <small>
+              {{ cart.totalItems }} item{{ cart.totalItems !== 1 ? 's' : '' }}
+            </small>
+          </div>
+
+          <button
+            class="close-cart"
+            @click="cartOpen = false"
+          >
+            <i class="bi bi-x-lg"></i>
+          </button>
+
+        </div>
+
+
+        <!-- Empty Cart -->
+        <div
+          v-if="cart.items.length === 0"
+          class="empty-cart"
+        >
+
+          <div class="empty-cart-icon">
+            <i class="bi bi-cart-x"></i>
+          </div>
+
+          <h4>
+            Your cart is empty
+          </h4>
+
+          <p>
+            Looks like you haven't added anything yet.
+          </p>
+
+          <button
+            class="btn btn-primary"
+            @click="cartOpen = false"
+          >
+            Continue Shopping
+          </button>
+
+        </div>
+
+
+        <!-- Cart Items -->
+        <div
+          v-else
+          class="cart-content"
+        >
+
+          <div
+            v-for="item in cart.items"
+            :key="item.id"
+            class="cart-item"
+          >
+
+            <!-- Image -->
+            <img
+              :src="item.image_url"
+              :alt="item.name"
+            >
+
+            <!-- Details -->
+            <div class="cart-item-details">
+
+              <h6>
+                {{ item.name }}
+              </h6>
+
+              <div class="cart-price">
+                ₦{{ Number(item.price).toLocaleString() }}
+              </div>
+
+
+              <!-- Quantity -->
+              <div class="quantity-control">
+
+                <button
+                  @click="cart.decreaseQty(item.id)"
+                >
+                  −
+                </button>
+
+                <span>
+                  {{ item.quantity }}
+                </span>
+
+                <button
+                  @click="cart.increaseQty(item.id)"
+                >
+                  +
+                </button>
+
+              </div>
+
+            </div>
+
+
+            <!-- Remove -->
+            <button
+              class="remove-item"
+              @click="cart.removeFromCart(item.id)"
+            >
+              <i class="bi bi-trash"></i>
+            </button>
+
+          </div>
+
+
+          <!-- Summary -->
+          <div class="cart-summary">
+
+            <div class="summary-row">
+
+              <span>
+                Subtotal
+              </span>
+
+              <strong>
+                ₦{{ cart.totalPrice.toLocaleString() }}
+              </strong>
+
+            </div>
+
+
+            <div class="summary-row">
+
+              <span>
+                Delivery
+              </span>
+
+              <strong>
+                ₦0
+              </strong>
+
+            </div>
+
+            <hr>
+
+
+            <div class="summary-total">
+
+              <span>
+                Total
+              </span>
+
+              <strong>
+                ₦{{ cart.totalPrice.toLocaleString() }}
+              </strong>
+
+            </div>
+
+
+            <!-- Checkout -->
+            <RouterLink
+              to="/checkout"
+              class="checkout-button"
+              @click="cartOpen = false"
+            >
+
+              <span>
+                Proceed to Checkout
+              </span>
+
+              <i class="bi bi-arrow-right"></i>
+
+            </RouterLink>
+
+
+            <button
+              class="continue-shopping"
+              @click="cartOpen = false"
+            >
+              Continue Shopping
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </Transition>
+
+  </div>
+
+</Transition>
  <Footer />
 
 </template>
@@ -1010,6 +1207,553 @@ onMounted(getData)
     font-size:24px;
     right:20px;
     bottom:20px;
+  }
+
+}
+
+/* ========================================
+   FLOATING CART
+======================================== */
+
+.floating-cart {
+  position: fixed;
+
+  right: 25px;
+  bottom: 25px;
+
+  width: 62px;
+  height: 62px;
+
+  border: none;
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: linear-gradient(
+    135deg,
+    #2563eb,
+    #4f46e5
+  );
+
+  color: white;
+
+  font-size: 24px;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 15px 35px rgba(37, 99, 235, .35);
+
+  z-index: 1000;
+
+  transition: .3s;
+}
+
+.floating-cart:hover {
+  transform: translateY(-5px) scale(1.05);
+
+  box-shadow:
+    0 20px 40px rgba(37, 99, 235, .45);
+}
+
+
+/* CART COUNT */
+
+.cart-count {
+  position: absolute;
+
+  top: -4px;
+  right: -4px;
+
+  min-width: 23px;
+  height: 23px;
+
+  padding: 2px 6px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #ef4444;
+
+  color: white;
+
+  border-radius: 50px;
+
+  font-size: 11px;
+
+  font-weight: 800;
+
+  border: 2px solid white;
+}
+
+
+/* ========================================
+   OVERLAY
+======================================== */
+
+.cart-overlay {
+  position: fixed;
+
+  inset: 0;
+
+  background: rgba(15, 23, 42, .55);
+
+  backdrop-filter: blur(4px);
+
+  z-index: 9999;
+
+  display: flex;
+
+  justify-content: flex-end;
+}
+
+
+/* ========================================
+   CART DRAWER
+======================================== */
+
+.cart-drawer {
+  width: 440px;
+
+  max-width: 100%;
+
+  height: 100vh;
+
+  background: white;
+
+  display: flex;
+
+  flex-direction: column;
+
+  box-shadow:
+    -15px 0 50px rgba(0,0,0,.15);
+}
+
+
+/* ========================================
+   HEADER
+======================================== */
+
+.cart-header {
+  padding: 25px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.cart-header h3 {
+  margin: 0;
+
+  font-weight: 800;
+
+  color: #111827;
+}
+
+.cart-header h3 i {
+  color: #2563eb;
+}
+
+.cart-header small {
+  color: #6b7280;
+}
+
+.close-cart {
+  width: 40px;
+  height: 40px;
+
+  border: none;
+
+  border-radius: 50%;
+
+  background: #f1f5f9;
+
+  color: #475569;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+
+  transition: .3s;
+}
+
+.close-cart:hover {
+  background: #fee2e2;
+
+  color: #dc2626;
+
+  transform: rotate(90deg);
+}
+
+
+/* ========================================
+   CART CONTENT
+======================================== */
+
+.cart-content {
+  flex: 1;
+
+  overflow-y: auto;
+
+  padding: 20px;
+}
+
+
+/* ========================================
+   CART ITEM
+======================================== */
+
+.cart-item {
+  display: flex;
+
+  align-items: center;
+
+  gap: 12px;
+
+  padding: 15px 0;
+
+  border-bottom: 1px solid #eef2f7;
+}
+
+.cart-item img {
+  width: 75px;
+  height: 75px;
+
+  object-fit: cover;
+
+  border-radius: 14px;
+
+  flex-shrink: 0;
+}
+
+.cart-item-details {
+  flex: 1;
+
+  min-width: 0;
+}
+
+.cart-item-details h6 {
+  margin: 0 0 5px;
+
+  font-weight: 700;
+
+  color: #1e293b;
+
+  white-space: nowrap;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+}
+
+.cart-price {
+  color: #2563eb;
+
+  font-size: 14px;
+
+  font-weight: 700;
+
+  margin-bottom: 8px;
+}
+
+
+/* ========================================
+   QUANTITY
+======================================== */
+
+.quantity-control {
+  display: inline-flex;
+
+  align-items: center;
+
+  border: 1px solid #e2e8f0;
+
+  border-radius: 8px;
+
+  overflow: hidden;
+}
+
+.quantity-control button {
+  width: 28px;
+  height: 28px;
+
+  border: none;
+
+  background: #f8fafc;
+
+  cursor: pointer;
+
+  font-weight: 700;
+
+  color: #334155;
+}
+
+.quantity-control button:hover {
+  background: #e2e8f0;
+}
+
+.quantity-control span {
+  min-width: 30px;
+
+  text-align: center;
+
+  font-size: 13px;
+
+  font-weight: 700;
+}
+
+
+/* ========================================
+   REMOVE
+======================================== */
+
+.remove-item {
+  border: none;
+
+  background: transparent;
+
+  color: #94a3b8;
+
+  cursor: pointer;
+
+  padding: 8px;
+
+  transition: .3s;
+}
+
+.remove-item:hover {
+  color: #ef4444;
+
+  transform: scale(1.15);
+}
+
+
+/* ========================================
+   SUMMARY
+======================================== */
+
+.cart-summary {
+  padding: 20px;
+
+  border-top: 1px solid #e5e7eb;
+
+  background: #fff;
+}
+
+.summary-row {
+  display: flex;
+
+  justify-content: space-between;
+
+  margin-bottom: 12px;
+
+  color: #64748b;
+}
+
+.summary-row strong {
+  color: #334155;
+}
+
+.summary-total {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  margin-bottom: 20px;
+}
+
+.summary-total span {
+  font-size: 18px;
+
+  font-weight: 700;
+}
+
+.summary-total strong {
+  font-size: 24px;
+
+  font-weight: 800;
+
+  color: #2563eb;
+}
+
+
+/* ========================================
+   CHECKOUT BUTTON
+======================================== */
+
+.checkout-button {
+  width: 100%;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  padding: 15px 18px;
+
+  border-radius: 13px;
+
+  background: linear-gradient(
+    135deg,
+    #2563eb,
+    #4f46e5
+  );
+
+  color: white;
+
+  text-decoration: none;
+
+  font-weight: 700;
+
+  box-shadow:
+    0 10px 25px rgba(37,99,235,.25);
+
+  transition: .3s;
+}
+
+.checkout-button:hover {
+  color: white;
+
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 15px 30px rgba(37,99,235,.35);
+}
+
+
+/* ========================================
+   CONTINUE SHOPPING
+======================================== */
+
+.continue-shopping {
+  width: 100%;
+
+  margin-top: 10px;
+
+  padding: 12px;
+
+  border: none;
+
+  background: transparent;
+
+  color: #64748b;
+
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.continue-shopping:hover {
+  color: #2563eb;
+}
+
+
+/* ========================================
+   EMPTY CART
+======================================== */
+
+.empty-cart {
+  flex: 1;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  justify-content: center;
+
+  text-align: center;
+
+  padding: 40px;
+}
+
+.empty-cart-icon {
+  width: 90px;
+  height: 90px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #eff6ff;
+
+  color: #2563eb;
+
+  font-size: 38px;
+
+  margin-bottom: 20px;
+}
+
+.empty-cart h4 {
+  font-weight: 800;
+}
+
+.empty-cart p {
+  color: #64748b;
+
+  margin-bottom: 25px;
+}
+
+
+/* ========================================
+   ANIMATIONS
+======================================== */
+
+.cart-fade-enter-active,
+.cart-fade-leave-active {
+  transition: opacity .3s ease;
+}
+
+.cart-fade-enter-from,
+.cart-fade-leave-to {
+  opacity: 0;
+}
+
+
+.cart-slide-enter-active,
+.cart-slide-leave-active {
+  transition: transform .35s ease;
+}
+
+.cart-slide-enter-from,
+.cart-slide-leave-to {
+  transform: translateX(100%);
+}
+
+
+/* ========================================
+   MOBILE
+======================================== */
+
+@media (max-width: 576px) {
+
+  .cart-drawer {
+    width: 100%;
+  }
+
+  .floating-cart {
+    right: 18px;
+    bottom: 18px;
+
+    width: 56px;
+    height: 56px;
   }
 
 }
