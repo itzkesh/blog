@@ -20,6 +20,7 @@ import PublicView from '../views/users/PublicView.vue'
 import PlaceOrder from '../views/users/PlaceOrder.vue'   
 import Cart from '../views/Cart.vue'   
 import Checkout from '../views/Checkout.vue'
+import EdithProfile from '../views/users/EdithProfile.vue'
 
 const routes = [
 
@@ -52,9 +53,8 @@ const routes = [
             
             { path: 'profile', name: 'AdminProfile', component: Profile },
             { path: 'orders', name: 'AdminOrders', component: Orders },
-            { path: 'edit/:id', name: 'AdminEditProduct', component: EdithPage }
-           
-            
+            { path: 'edit/:id', name: 'AdminEditProduct', component: EdithPage },
+            { path: 'edit-profile/:id', name: 'AdminEditProfile', component: EdithProfile },
         ]
     },
     
