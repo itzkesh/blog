@@ -7,7 +7,6 @@ import Register from '../views/auth/Register.vue'
 import ResetPassword from '../views/auth/ResetPassword.vue'
 import ForgotPassword from '../views/auth/ForgotPassword.vue'
 import Dashboard from '../views/users/Dashboard.vue'
-
 import AddProduct from '../views/users/AddProduct.vue'
 import Profile from '../views/users/Profile.vue'
 import Product from '../views/users/ProductPage.vue'
@@ -21,6 +20,7 @@ import PlaceOrder from '../views/users/PlaceOrder.vue'
 import Cart from '../views/Cart.vue'   
 import Checkout from '../views/Checkout.vue'
 import EdithProfile from '../views/users/EdithProfile.vue'
+import Help from '../views/users/Help.vue'
 
 const routes = [
 
@@ -29,7 +29,7 @@ const routes = [
     {path: '/place-order/:id', name: 'PlaceOrder', component: PlaceOrder},
     {path: '/cart', name: 'Cart', component: Cart},
     {path: '/checkout', name: 'Checkout', component: Checkout},
-
+    {path: '/help', name: 'Help', component: Help},
     {
      path: '/',
      component: UserLayout,
